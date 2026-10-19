@@ -128,7 +128,9 @@ function textForScan(path, rawLatin1) {
     writeFileSync(tmp, Buffer.from(rawLatin1, 'latin1'));
     return execFileSync('pdftotext', ['-layout', tmp, '-'], { maxBuffer: 1 << 20 }).toString('utf8');
   } catch {
-    return rawLatin1;
+    // Raw PDF streams false-match the phone regex (font width tables). If we
+    // cannot extract text, skip the content scan rather than scanning bytes.
+    return '';
   } finally {
     try { unlinkSync(tmp); } catch { /* ignore */ }
   }
