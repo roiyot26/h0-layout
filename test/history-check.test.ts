@@ -4,11 +4,11 @@ import { findBanned, findPhone, hashTerm, tokenize } from '../scripts/history-ch
 
 // The real list holds hashes only. These tests use a stand-in list built from
 // neutral words, so no banned term has to appear here.
-const table = new Map<string, { h: string; allowIn?: string[] }>();
+const table = new Map<string, { h: string; allowIn?: string[]; scope?: 'metadata' }>();
 for (const term of ['semaphore', 'goodsshed', 'turnoutcoil']) table.set(hashTerm(term), { h: hashTerm(term) });
 table.set(hashTerm('ballast2026'), { h: hashTerm('ballast2026'), allowIn: ['*.pdf'] });
 // A two-word term and a metadata-only word, built at runtime.
-const pairWords = ['signal', 'box'];
+const pairWords: [string, string] = ['signal', 'box'];
 table.set(hashTerm(pairWords.join('')), { h: hashTerm(pairWords.join('')) });
 const metaWord = ['plat', 'form'].join('');
 table.set(hashTerm(metaWord), { h: hashTerm(metaWord), scope: 'metadata' });
