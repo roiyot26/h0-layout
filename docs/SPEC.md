@@ -20,7 +20,7 @@ Records: `docs/gates/M<n>-<gate>-<sha7>.md`, with `ux` for the UX gate.
    once per visit, after first paint, and is skipped entirely under reduced motion.
 2. **The hop camera never enters the tunnel.** On the Campus ↔ City hop it arcs over
    the tunnel hill, keeping at least 12 mm from every mesh on every frame. Only the
-   cab-view ride goes through the tunnel.
+   train ride, chase or cab view, goes through the tunnel.
 3. **Labels.** "Enter the layout" turns on the 3D view (parked, hops as navigation).
    "Ride the train" starts the optional ride: one lap of 41.7 s plus 4 × 6 s dwell,
    about 66 s.
