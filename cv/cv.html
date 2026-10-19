@@ -1,0 +1,178 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<title>Roi Yotvat — CV</title>
+<style>
+@font-face {
+  font-family: Lit;
+  src: url("fonts/Literata.ttf");
+  font-weight: 200 900;
+}
+@font-face {
+  font-family: Lit;
+  font-style: italic;
+  src: url("fonts/Literata-Italic.ttf");
+  font-weight: 200 900;
+}
+@font-face {
+  font-family: Int;
+  src: url("fonts/Inter.ttf");
+  font-weight: 100 900;
+}
+@page { size: A4; margin: 0 }
+* { box-sizing: border-box; margin: 0; padding: 0 }
+html, body { width: 210mm; height: 297mm }
+body {
+  font-family: Lit, "Times New Roman", serif;
+  color: #111;
+  font-size: 10pt;
+  line-height: 1.45;
+  padding: 20mm 20mm 16mm;
+}
+header {
+  border-bottom: 0.6pt solid #111;
+  padding-bottom: 5mm;
+  margin-bottom: 6mm;
+}
+h1 {
+  font-weight: 600;
+  font-size: 24pt;
+  letter-spacing: -0.01em;
+  line-height: 1.1;
+}
+.title { font-style: italic; font-size: 12pt; margin-top: 1mm }
+.location {
+  font-family: Int, "Helvetica Neue", Arial, sans-serif;
+  font-size: 8.6pt;
+  margin-top: 1.5mm;
+}
+.contact {
+  font-family: Int, "Helvetica Neue", Arial, sans-serif;
+  font-size: 8.6pt;
+  margin-top: 3mm;
+}
+.contact a { color: #111; text-decoration: none }
+.contact span + span::before { content: "·"; margin: 0 2.2mm }
+h2 {
+  font-family: Int, "Helvetica Neue", Arial, sans-serif;
+  font-size: 8pt;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  margin: 6.5mm 0 2.5mm;
+}
+.row {
+  display: grid;
+  grid-template-columns: 30mm 1fr;
+  column-gap: 5mm;
+  margin-bottom: 4mm;
+}
+.yrs {
+  font-family: Int, "Helvetica Neue", Arial, sans-serif;
+  font-size: 8.6pt;
+  padding-top: 0.6mm;
+  font-variant-numeric: tabular-nums;
+}
+.role { font-weight: 600 }
+.where { font-style: italic }
+.row ul { margin: 1.2mm 0 0 3.6mm }
+.row li { margin-bottom: 0.8mm }
+dl.skills {
+  display: grid;
+  grid-template-columns: 30mm 1fr;
+  column-gap: 5mm;
+  row-gap: 1.4mm;
+}
+.skills dt {
+  font-family: Int, "Helvetica Neue", Arial, sans-serif;
+  font-size: 8.6pt;
+  padding-top: 0.4mm;
+}
+</style>
+</head>
+<body>
+<header>
+  <h1>Roi Yotvat</h1>
+  <div class="title">Full-stack developer, AI-driven development</div>
+  <div class="location">Tel Aviv</div>
+  <div class="contact">
+    <span><a href="mailto:@@EMAIL@@">@@EMAIL@@</a></span>
+    <span><a href="https://www.linkedin.com/in/roi-yotvat-874ba9209/">linkedin.com/in/roi-yotvat-874ba9209</a></span>
+    <span><a href="https://github.com/roiyot26">github.com/roiyot26</a></span>
+  </div>
+</header>
+
+<p>
+  Full-stack developer building web applications and internal tools with LLM coding agents and
+  agentic workflows, and bringing AI into how the team works. Grounded in React, Node.js and
+  MongoDB, and I own the work end to end: requirements, implementation, testing and maintenance.
+  Fluent in English.
+</p>
+
+<h2>Experience</h2>
+
+<div class="row">
+  <div class="yrs">2026 – now</div>
+  <div>
+    <div class="role">Full-stack developer <span class="where">· Moveo Creative</span></div>
+    <ul>
+      <li>
+        Lead developer on full-stack projects for enterprise clients: custom WordPress
+        (PHP, Gutenberg, ACF) and React / Next.js sites, from requirements through deployment
+        and maintenance.
+      </li>
+      <li>
+        Day-to-day contact with clients and third-party vendors: gathering requirements,
+        coordinating integrations, resolving issues.
+      </li>
+      <li>
+        Brought LLM coding agents and custom AI tooling into the team's workflow, including a
+        hybrid-search RAG assistant over MCP.
+      </li>
+      <li>
+        Built and teach an internal web development course, with a full module on building with
+        AI, delivered live to the whole creative team.
+      </li>
+    </ul>
+  </div>
+</div>
+
+<div class="row">
+  <div class="yrs">2022 – 2026</div>
+  <div>
+    <div class="role">Full-stack developer and coding instructor <span class="where">· Mister Bit</span></div>
+    <ul>
+      <li>
+        Developed and maintained client web apps with React, Node.js / Express and MongoDB.
+      </li>
+      <li>
+        Taught multiple full-stack course cycles of 60–70 students each at Coding Academy:
+        JavaScript, React, Node.js, Express, MongoDB.
+      </li>
+    </ul>
+  </div>
+</div>
+
+<h2>Education</h2>
+
+<div class="row">
+  <div class="yrs">2021 – 2022</div>
+  <div>
+    <div class="role">Full-stack developer bootcamp <span class="where">· Coding Academy</span></div>
+    Intensive four-month program of self-led learning and team projects modelled on real
+    dev teams. Front end (HTML, CSS, JavaScript, React) and back end (Node.js, Express, MongoDB).
+  </div>
+</div>
+
+<h2>Skills</h2>
+<dl class="skills">
+  <dt>Front end</dt><dd>JavaScript, TypeScript, React, Next.js, Redux, Vue.js, HTML, CSS / SCSS</dd>
+  <dt>Back end</dt><dd>Node.js, Express, REST APIs, MongoDB, Socket.io, PHP, WordPress</dd>
+  <dt>Infra and tools</dt><dd>AWS, CI/CD, Git</dd>
+  <dt>AI development</dt><dd>LLM coding agents, LLM-assisted coding, agentic workflows, AI code review, prompt engineering</dd>
+  <dt>Also</dt><dd>Technical writing, teaching and mentoring</dd>
+  <dt>Spoken</dt><dd>Hebrew (native), English (fluent)</dd>
+</dl>
+</body>
+</html>

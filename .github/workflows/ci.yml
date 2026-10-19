@@ -112,3 +112,15 @@ jobs:
         run: npx gltf-transform inspect test/fixtures/cube.glb
       - name: meshopt, KTX2 and caps
         run: npm run glb-check
+
+  cv:
+    name: cv
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with: { node-version: 20, cache: npm }
+      - run: npm ci
+      - name: Verify public/cv.pdf
+        run: npm run cv-check
+
