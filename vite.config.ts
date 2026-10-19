@@ -18,4 +18,8 @@ export default defineConfig({
     emptyOutDir: true,
     target: 'es2022',
   },
+  test: {
+    // Playwright specs live under e2e/ and are run by the facts/axe CI jobs.
+    exclude: ['**/node_modules/**', '**/dist/**', 'e2e/**'],
+  },
 });
