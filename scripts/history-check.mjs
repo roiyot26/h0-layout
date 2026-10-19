@@ -17,6 +17,15 @@
 // tokens only, so a word that merely contains a banned term does not match.
 // Letter-only parts of mixed tokens and a trailing plural "s" are also checked.
 //
+// Scope: an entry may carry "scope": "metadata". It is then only applied to commit
+// metadata (author and committer fields, commit messages and ref/branch names), not
+// to file contents or file paths. This is for ordinary words that real copy may use
+// but that must not appear in the history's metadata.
+//
+// Multi-word terms are stored as the hash of their words joined with nothing
+// between them, lowercased; any whitespace or punctuation between the words in the
+// text still matches, because matching works on token runs.
+//
 // Path rules: an entry in the list may carry "allowIn": ["*.pdf"]. That entry is
 // then not applied to the *contents* of files whose path matches one of those
 // patterns (it still applies to the path itself, to messages and to every other
@@ -69,12 +78,15 @@ function allowedHere(entry, path) {
 
 // Returns a list of { hash, term-position } findings. `path` is set when the text
 // is the content of a file at that path.
-export function findBanned(text, path = null, table = entries) {
+// `context` is 'metadata', 'path' or 'content'.
+export function findBanned(text, path = null, table = entries, context = path ? 'content' : 'metadata') {
   const tokens = tokenize(text);
   const found = new Set();
   const check = (s) => {
     const e = table.get(sha(s));
-    if (e && !allowedHere(e, path)) found.add(e.h.slice(0, 12));
+    if (!e || allowedHere(e, path)) return;
+    if (e.scope === 'metadata' && context !== 'metadata') return;
+    found.add(e.h.slice(0, 12));
   };
   for (let i = 0; i < tokens.length; i++) {
     let gram = '';
@@ -105,8 +117,8 @@ const problems = [];
 function report(where, what) {
   problems.push(`${where}: ${what}`);
 }
-function scanText(where, text, path = null) {
-  const hits = findBanned(text, path);
+function scanText(where, text, path = null, context = path ? 'content' : 'metadata') {
+  const hits = findBanned(text, path, entries, context);
   if (hits.length) report(where, `banned term (hash ${hits.join(', ')})`);
   if (findPhone(text)) report(where, 'phone number pattern');
 }
@@ -129,7 +141,7 @@ function scanCommit(sha7) {
     const key = `${blob}:${path}`;
     if (seenBlobs.has(key)) continue;
     seenBlobs.add(key);
-    scanText(`${at} path`, path);
+    scanText(`${at} path`, path, null, 'path');
     const content = git(['cat-file', 'blob', blob]).toString('latin1');
     scanText(`${at} ${path}`, content, path);
   }
