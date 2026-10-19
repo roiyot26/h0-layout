@@ -1,0 +1,61 @@
+:root {
+  --body: #16181a;
+  --flap: #23262a;
+  --ink: #f2eee4;
+  --dim: #b9b2a3;
+  --signal: #e3b341;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; height: 100%; }
+body {
+  background: var(--body);
+  color: var(--ink);
+  font: 16px/1.5 ui-monospace, 'SFMono-Regular', Menlo, Consolas, 'Liberation Mono', monospace;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+}
+.station { width: min(100%, 1060px); }
+.board {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0 6px;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+.board caption {
+  text-align: left;
+  font: 600 clamp(20px, 3vw, 28px)/1.2 system-ui, sans-serif;
+  letter-spacing: 0.12em;
+  padding-bottom: 12px;
+  border-bottom: 2px solid var(--signal);
+  margin-bottom: 8px;
+}
+.board th {
+  text-align: left;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--dim);
+  padding: 4px 10px;
+}
+.board td {
+  background: var(--flap);
+  background-image: linear-gradient(transparent calc(50% - 0.5px), #0e0f11 calc(50% - 0.5px), #0e0f11 calc(50% + 0.5px), transparent calc(50% + 0.5px));
+  padding: 10px;
+  font-size: clamp(15px, 2.2vw, 22px);
+  white-space: nowrap;
+}
+.board td:first-child { border-radius: 2px 0 0 2px; }
+.board td:last-child { border-radius: 0 2px 2px 0; }
+.board .remark { color: var(--signal); }
+.note { color: var(--dim); margin-top: 24px; font-size: 15px; }
+.visually-hidden {
+  position: absolute; width: 1px; height: 1px; overflow: hidden;
+  clip: rect(0 0 0 0); clip-path: inset(50%); white-space: nowrap;
+}
+@media (max-width: 640px) {
+  .board .wide { display: none; }
+  .board td { padding: 10px 8px; }
+}
