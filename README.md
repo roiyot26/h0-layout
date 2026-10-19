@@ -70,7 +70,18 @@ approval). Records live in `docs/gates/` and name roles only.
 
 ## Licence
 
-The code is under the MIT License (see `LICENSE`). The site's content, copy,
-images and CV are (c) 2026 Roi Yotvat, all rights reserved, and are not covered by
-the MIT License. The fonts in `public/fonts/` are under the SIL Open Font License
-1.1 (see the license files next to them).
+The source code in this repository is under the MIT License (see `LICENSE`).
+
+The following are not covered by the MIT License. They are (c) 2026 Roi Yotvat,
+all rights reserved:
+
+- the site's written content and copy, including the content file
+  (`content.ts`) and everything in `cv/`, even though they sit next to the code;
+- the CV (`cv.pdf`);
+- all images, screenshots, 3D models, textures and renders, including
+  `docs/gates/*/shots/`;
+- Roi Yotvat's name, likeness and personal brand.
+
+The fonts in `public/fonts/` are under the SIL Open Font License 1.1 (see the
+license files next to them). The generated test fixtures in `test/fixtures/` are
+code and are under the MIT License.
