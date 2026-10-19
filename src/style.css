@@ -51,6 +51,7 @@ body {
 .board td:last-child { border-radius: 0 2px 2px 0; }
 .board .remark { color: var(--signal); }
 .note { color: var(--dim); margin-top: 24px; font-size: 15px; }
+.note + .note{margin-top:4px}
 .visually-hidden {
   position: absolute; width: 1px; height: 1px; overflow: hidden;
   clip: rect(0 0 0 0); clip-path: inset(50%); white-space: nowrap;
