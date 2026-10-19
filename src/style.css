@@ -57,7 +57,7 @@ body{font:500 16px/1.5 'IBM Plex Mono',ui-monospace,monospace}
   position: absolute; width: 1px; height: 1px; overflow: hidden;
   clip: rect(0 0 0 0); clip-path: inset(50%); white-space: nowrap;
 }
+@media (max-width:882px){.board .wide{display:none}}
 @media (max-width: 640px) {
-  .board .wide { display: none; }
   .board td { padding: 10px 8px; }
 }
