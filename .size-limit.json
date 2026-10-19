@@ -1,0 +1,4 @@
+[
+  { "name": "placeholder JS", "path": "dist/assets/*.js", "limit": "15 KB", "gzip": true },
+  { "name": "placeholder CSS", "path": "dist/assets/*.css", "limit": "50 KB", "gzip": true }
+]
