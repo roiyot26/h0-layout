@@ -9,8 +9,6 @@ they were resolved. Roles only.
 **Gates, per milestone, from M1 on:** design → UX → QA → hiring rules → owner.
 Records: `docs/gates/M<n>-<gate>-<sha7>.md`, with `ux` for the UX gate.
 
-**Ownership:** From M2 the second engineer owns the three.js world and its triangle and draw-call budget; the first engineer owns the repo, CI, the static site and merges.
-
 ## Rulings
 
 1. **Board rows are static HTML at first paint.** Every content row (four stations,
@@ -18,7 +16,8 @@ Records: `docs/gates/M<n>-<gate>-<sha7>.md`, with `ux` for the UX gate.
    JS or 3D. The rows never wait for bytes: download progress drives only the status
    row (BOARDING → `DELAYED · n%` → ON TIME). A flap cascade is cosmetic, starts no
    earlier than first paint and never blanks a readable cell. Under reduced motion
-   the rows appear instantly with no flip.
+   the rows appear instantly with no flip. The cascade is optional and runs at most
+   once per visit, after first paint, and is skipped entirely under reduced motion.
 2. **The hop camera never enters the tunnel.** On the Campus ↔ City hop it arcs over
    the tunnel hill, keeping at least 12 mm from every mesh on every frame. Only the
    cab-view ride goes through the tunnel.
@@ -39,13 +38,13 @@ Records: `docs/gates/M<n>-<gate>-<sha7>.md`, with `ux` for the UX gate.
 
 | # | Fix (as written in the checklist) |
 |---|---|
-| F7 | DOM and visual order: first-screen facts block → Ride/Skip → board, at every width. Gate M1-01/02 at 360×780 too. |
+| F7 | DOM and visual order: first-screen facts block → Enter the layout / Skip to the facts → board, at every width. Gate M1-01/02 at 360×780 too. |
 | F8 | One rule: under reduced motion, any **full-frame** change (camera, light state `t`, plane and night-train stills) is a **200 ms linear opacity crossfade**; any **small UI** change (flaps, sign swap, stamp, sheet snap) is instant; **0 translation, rotation or scale anywhere**. Then: board slide → a 200 ms fade; Skip and portal pulses → a colour or outline change only; Kage close-up → a 200 ms crossfade; orbit → no inertia. |
 | F9 | (a) Overview ↔ station = a 300 ms crossfade (rule: anything that isn't a same-straight neighbour). (b) A 1.0 s ease along a path kept ≥ 12 mm from every mesh (enter from the open platform side, or fade the roof glazing to 0 over the first 300 ms); under reduced motion, a 200 ms crossfade. The diagram opens as a `pushState` overlay with focus on its kicker; Back/Esc restores the City view and puts focus on the sheet hotspot, with no reload (M4-03). |
 | F10 | Retarget, never queue (M2-08). Arrows act only while focus is inside the layout region (switcher uses a roving tabindex), never in a scrollable panel. `pushState` only on final arrival. *(The first sentence is superseded by ruling 7; the rest stands.)* |
 | F11 | Corner map (**P**): Skip to the facts **top-right** on every screen (rule 2); the "Departures" board button (renamed from "Timetable") top-left; ride ✕ top-left while riding (it replaces Departures, which comes back on exit); ticket menu bottom-right on desktop and in the phone header row. Check that none overlaps at 360. |
 | F12 | A right-side panel, 400 px wide, opening on arrival together with the 150 ms label fade (opacity only); it never covers Skip or the current label; its heading is the next Tab stop (M4-06). *(Focus moves to the heading on arrival, per ruling 6.)* |
-| F13 | Gate: no task over 100 ms while the board is visible (desktop and phone), INP ≤ 200 ms, texture uploads spread at ≤ 1 per frame. State explicitly whether phones preload on idle (and whether Save-Data opts out) or load on opt-in, and measure the M5 "≤ 5 s" from the tap under that rule. |
+| F13 | Gate: no task over 100 ms while the board is visible (desktop and phone), INP ≤ 200 ms, texture uploads spread at ≤ 1 per frame. On phones the 3D loads only on opt-in, never on idle, and the 5 s budget is timed from the tap. Save-Data doesn't change that, because nothing loads until the tap. *(Settled by ruling 10.)* |
 | F14 | Rest it somewhere visible in the Workshop view, such as the Workshop halt platform at x ≈ 960 or the goods-shed roof, for 10 s, then a 200 ms crossfade back to the bench. Or crossfade the camera to Bootcamp only if the visitor asked for it (not recommended). |
 
 ## Conflicts and how they were resolved
@@ -62,7 +61,7 @@ Records: `docs/gates/M<n>-<gate>-<sha7>.md`, with `ux` for the UX gate.
 | Style §8.3: under reduced motion the paper plane rests on Platform 1 (x 1310), out of frame from the Workshop view. | F14: it rests somewhere visible in the Workshop view for 10 s. |
 | Style §3.1 / §8.1: the night swap is "instant" or "jumps" under reduced motion. | F8: full-frame changes are a 200 ms linear crossfade. |
 | Style §5–6: the board stays reachable as the "Timetable" button, top left. | F11: renamed "Departures"; Skip is top-right. |
-| Style §11: the phone arrival is the board first. | F7: facts block → Ride/Skip → board at every width. |
+| Style §11: the phone arrival is the board first. | F7: facts block → Enter the layout / Skip to the facts → board at every width. |
 
 ## Confirmed rulings (owner, 2026-10-19)
 
