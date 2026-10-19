@@ -67,3 +67,10 @@ must reference their textures. Rebuild it with `scripts/make-test-glb.mjs`.
 
 Each milestone ends in four written gates (design, QA, hiring rules, owner
 approval). Records live in `docs/gates/` and name roles only.
+
+## Licence
+
+The code is under the MIT License (see `LICENSE`). The site's content, copy,
+images and CV are (c) 2026 Roi Yotvat, all rights reserved, and are not covered by
+the MIT License. The fonts in `public/fonts/` are under the SIL Open Font License
+1.1 (see the license files next to them).
