@@ -20,9 +20,7 @@ body {
 body{font:500 16px/1.5 'IBM Plex Mono',ui-monospace,monospace}
 .station { width: min(100%, 1060px); }
 .board {
-  width: 100%;
   border-collapse: separate;
-  border-spacing: 0 6px;
   font-variant-numeric: tabular-nums;
   text-transform: uppercase;
 }
@@ -33,6 +31,7 @@ body{font:500 16px/1.5 'IBM Plex Mono',ui-monospace,monospace}
   border-bottom: 2px solid var(--signal);
   margin-bottom: 8px;
 }
+.board{border-spacing:12px 6px;margin-inline:-12px;width:calc(100% + 24px)}
 .board td{letter-spacing:0.04em}
 .board th{letter-spacing:0.06em}
 .board caption{font:600 clamp(20px,3vw,28px)/1.2 'Barlow Semi Condensed',system-ui,sans-serif;color:var(--signal)}
@@ -45,7 +44,7 @@ body{font:500 16px/1.5 'IBM Plex Mono',ui-monospace,monospace}
 }
 .board td {
   background: var(--flap);
-  background-image: linear-gradient(transparent calc(50% - 0.5px), #0e0f11 calc(50% - 0.5px), #0e0f11 calc(50% + 0.5px), transparent calc(50% + 0.5px));
+  background-image: linear-gradient(transparent calc(50% - 0.5px), #0e0f10 calc(50% - 0.5px), #0e0f10 calc(50% + 0.5px), transparent calc(50% + 0.5px));
   padding: 10px;
   font-size: clamp(15px, 2.2vw, 22px);
   white-space: nowrap;
