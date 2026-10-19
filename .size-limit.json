@@ -1,4 +1,35 @@
 [
-  { "name": "placeholder JS", "path": "dist/assets/*.js", "limit": "15 KB", "gzip": true },
-  { "name": "placeholder CSS", "path": "dist/assets/*.css", "limit": "50 KB", "gzip": true }
+  {
+    "name": "placeholder JS",
+    "path": "dist/assets/*.js",
+    "limit": "15 KB",
+    "gzip": true
+  },
+  {
+    "name": "placeholder CSS",
+    "path": "dist/assets/*.css",
+    "limit": "50 KB",
+    "gzip": true
+  },
+  {
+    "name": "IBM Plex Mono Medium (latin woff2)",
+    "path": "dist/fonts/plex-mono-500-sub.woff2",
+    "limit": "13 KB",
+    "gzip": false,
+    "brotli": false
+  },
+  {
+    "name": "Barlow Semi Condensed SemiBold (latin woff2)",
+    "path": "dist/fonts/barlow-sc-600-sub.woff2",
+    "limit": "20 KB",
+    "gzip": false,
+    "brotli": false
+  },
+  {
+    "name": "first-paint fonts",
+    "path": "dist/fonts/*.woff2",
+    "limit": "50 KB",
+    "gzip": false,
+    "brotli": false
+  }
 ]

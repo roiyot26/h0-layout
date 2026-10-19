@@ -4,9 +4,14 @@ import { findBanned, findPhone, hashTerm, tokenize } from '../scripts/history-ch
 
 // The real list holds hashes only. These tests use a stand-in list built from
 // neutral words, so no banned term has to appear here.
-const table = new Map<string, { h: string; allowIn?: string[] }>();
+const table = new Map<string, { h: string; allowIn?: string[]; scope?: 'metadata' }>();
 for (const term of ['semaphore', 'goodsshed', 'turnoutcoil']) table.set(hashTerm(term), { h: hashTerm(term) });
 table.set(hashTerm('ballast2026'), { h: hashTerm('ballast2026'), allowIn: ['*.pdf'] });
+// A two-word term and a metadata-only word, built at runtime.
+const pairWords: [string, string] = ['signal', 'box'];
+table.set(hashTerm(pairWords.join('')), { h: hashTerm(pairWords.join('')) });
+const metaWord = ['plat', 'form'].join('');
+table.set(hashTerm(metaWord), { h: hashTerm(metaWord), scope: 'metadata' });
 
 describe('tokenize', () => {
   it('splits camelCase, digits and punctuation', () => {
@@ -34,6 +39,22 @@ describe('findBanned', () => {
     expect(findBanned('ballast2026@example', 'cv/notes.md', table)).toHaveLength(1);
     expect(findBanned('ballast2026@example', 'public/cv.pdf', table)).toHaveLength(0);
     expect(findBanned('semaphore', 'public/cv.pdf', table)).toHaveLength(1);
+  });
+});
+
+describe('pairs and scopes', () => {
+  it('matches a two-word term with any whitespace or punctuation between the words', () => {
+    const [a, b] = pairWords;
+    expect(findBanned(`the ${a} ${b} at the end`, null, table)).toHaveLength(1);
+    expect(findBanned(`${a.toUpperCase()} \t\n  ${b}`, null, table)).toHaveLength(1);
+    expect(findBanned(`${a}-${b}`, null, table)).toHaveLength(1);
+    expect(findBanned(`${a} only, then ${b}`, null, table)).toHaveLength(0);
+  });
+  it('applies metadata-only terms to messages and refs, not to files or paths', () => {
+    expect(findBanned(`Fix the ${metaWord} sign`, null, table, 'metadata')).toHaveLength(1);
+    expect(findBanned(`refs/heads/${metaWord}-fix`, null, table, 'metadata')).toHaveLength(1);
+    expect(findBanned(`${metaWord} 1`, 'index.html', table, 'content')).toHaveLength(0);
+    expect(findBanned(`docs/${metaWord}.md`, null, table, 'path')).toHaveLength(0);
   });
 });
 

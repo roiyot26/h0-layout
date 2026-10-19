@@ -1,3 +1,5 @@
+@font-face{font-family:'IBM Plex Mono';src:url(/fonts/plex-mono-500-sub.woff2) format('woff2');font-weight:500;font-style:normal;font-display:swap}
+@font-face{font-family:'Barlow Semi Condensed';src:url(/fonts/barlow-sc-600-sub.woff2) format('woff2');font-weight:600;font-style:normal;font-display:swap}
 :root {
   --body: #16181a;
   --flap: #23262a;
@@ -11,28 +13,28 @@ html, body { margin: 0; height: 100%; }
 body {
   background: var(--body);
   color: var(--ink);
-  font: 16px/1.5 ui-monospace, 'SFMono-Regular', Menlo, Consolas, 'Liberation Mono', monospace;
   display: grid;
   place-items: center;
   padding: 24px;
 }
+body{font:500 16px/1.5 'IBM Plex Mono',ui-monospace,monospace}
 .station { width: min(100%, 1060px); }
 .board {
-  width: 100%;
   border-collapse: separate;
-  border-spacing: 0 6px;
   font-variant-numeric: tabular-nums;
-  letter-spacing: 0.08em;
   text-transform: uppercase;
 }
 .board caption {
   text-align: left;
-  font: 600 clamp(20px, 3vw, 28px)/1.2 system-ui, sans-serif;
   letter-spacing: 0.12em;
   padding-bottom: 12px;
   border-bottom: 2px solid var(--signal);
-  margin-bottom: 8px;
+  margin: 0 12px 8px;
 }
+.board{border-spacing:12px 6px;margin-inline:-12px;width:calc(100% + 24px)}
+.board td{letter-spacing:0.04em}
+.board th{letter-spacing:0.06em}
+.board caption{font:600 clamp(20px,3vw,28px)/1.2 'Barlow Semi Condensed',system-ui,sans-serif;color:var(--signal)}
 .board th {
   text-align: left;
   font-size: 13px;
@@ -42,20 +44,18 @@ body {
 }
 .board td {
   background: var(--flap);
-  background-image: linear-gradient(transparent calc(50% - 0.5px), #0e0f11 calc(50% - 0.5px), #0e0f11 calc(50% + 0.5px), transparent calc(50% + 0.5px));
+  background-image: linear-gradient(transparent calc(50% - 0.5px), #0e0f10 calc(50% - 0.5px), #0e0f10 calc(50% + 0.5px), transparent calc(50% + 0.5px));
   padding: 10px;
   font-size: clamp(15px, 2.2vw, 22px);
   white-space: nowrap;
 }
-.board td:first-child { border-radius: 2px 0 0 2px; }
-.board td:last-child { border-radius: 0 2px 2px 0; }
+.board td{border-radius:2px}
 .board .remark { color: var(--signal); }
 .note { color: var(--dim); margin-top: 24px; font-size: 15px; }
 .visually-hidden {
   position: absolute; width: 1px; height: 1px; overflow: hidden;
   clip: rect(0 0 0 0); clip-path: inset(50%); white-space: nowrap;
 }
-@media (max-width: 640px) {
-  .board .wide { display: none; }
-  .board td { padding: 10px 8px; }
-}
+@media (max-width:882px){.board .wide{display:none}}
+@media (max-width:640px){.board td{line-height:21px;padding:9px 8px 11px}}
+@media (max-width:480px){body{padding-inline:16px}}
