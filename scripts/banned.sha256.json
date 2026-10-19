@@ -1,0 +1,55 @@
+{
+  "algo": "sha256",
+  "about": "Banned terms, stored as SHA-256 of the lowercased term with separators removed. See scripts/history-check.mjs. Entries with allowIn are not applied to the contents of files matching those patterns.",
+  "requiredEmail": "95028994+roiyot26@users.noreply.github.com",
+  "entries": [
+    {
+      "h": "2126ee32a42735bdba2abdfe540afab577243c3a69c88d5a82c5a84f30db61db"
+    },
+    {
+      "h": "29d8422fdd68cdd0e11753622ad7e67f53215ab8fce986f298957411ccde4617"
+    },
+    {
+      "h": "60386cf403ca121ea3cba22c04b1258b971da61e9de5f24790005a4324c25be4"
+    },
+    {
+      "h": "5944ae849448011ca08c3785f1de1a54c8a96d6c23f787f9d962b624edd4151d"
+    },
+    {
+      "h": "d8252e5d78f9b929a157d4cd7e19ccf4a8adff7c4a7aa442fb84a3ecf8138ac9"
+    },
+    {
+      "h": "982945308d3682d16636fd628c314e293499e99c00120acd9b693f5ab16e1648"
+    },
+    {
+      "h": "f44a052a0ececd8044386fac3d42cde8bcb4484d13579e7c51c47053fe25fc78"
+    },
+    {
+      "h": "71b41d6dd48dc58eba8f5cf9edf30fef6597fdf285a521bb8fcbad4b3d50887d"
+    },
+    {
+      "h": "92d46204d8e9aeb3b37873c794348b3132ab9c9f33a89f2063c46180914c0104"
+    },
+    {
+      "h": "c70eca6b0f88f44d81a41311647e50fda1ac454ec04ffd442b0eb4743a993131"
+    },
+    {
+      "h": "c857d09db23e6822e3600bc06ad8d58f92ed62bc8efd81c753f77048662cb97d"
+    },
+    {
+      "h": "6d92475719b10e266cceead6b4dca3b637c0d5adae37d2b91a5f094e40b57e9e"
+    },
+    {
+      "h": "3281dd7a411134b7544c366917295189d61b74f83a45ead2642d0946514dc743"
+    },
+    {
+      "h": "4285253c30a27d171674e09b18932c2204a8dfcf8b0c109486a4f20e391af7bd"
+    },
+    {
+      "h": "87d9bab300dfd9154b2a68f4872f29ce32e1235fb9f296b7e8c5d200e1e8afd5",
+      "allowIn": [
+        "*.pdf"
+      ]
+    }
+  ]
+}

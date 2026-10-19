@@ -1,0 +1,4 @@
+#!/bin/sh
+# Blocks a push when the commits, branch names, paths or files being pushed break
+# the public-history rules. Enabled by `npm run prepare` (sets core.hooksPath).
+exec node "$(git rev-parse --show-toplevel)/scripts/history-check.mjs" --pre-push
