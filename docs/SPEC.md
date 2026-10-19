@@ -64,6 +64,19 @@ Records: `docs/gates/M<n>-<gate>-<sha7>.md`, with `ux` for the UX gate.
 | Style §5–6: the board stays reachable as the "Timetable" button, top left. | F11: renamed "Departures"; Skip is top-right. |
 | Style §11: the phone arrival is the board first. | F7: facts block → Ride/Skip → board at every width. |
 
+## Confirmed rulings (owner, 2026-10-19)
+
+These were open calls in the conflict table above; the owner has confirmed them, and
+they are now part of the contract.
+
+9. **Save-Data or no WebGL: no redirect.** The requested route shows its full HTML
+   with a one-line offer of `/timetable`. Without WebGL the 3D control is hidden.
+10. **Phones load 3D only after the tap**, with no idle preload. The M5 "≤ 5 s" is
+    timed from that tap.
+11. **Cosmetic cascade.** An optional one-time flap cascade after first paint is
+    allowed only if no readable cell ever goes blank. Reduced motion skips it
+    entirely.
+
 ## Watch list for M1
 
 - `npm audit` has 3 high advisories in the braces/micromatch chain under the glTF
