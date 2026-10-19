@@ -46,6 +46,10 @@ Both are under the SIL Open Font License 1.1; the license files sit next to them
   checked inside the contents of files ending in `.pdf` (the published CV is a PDF).
   It is still checked in every other file, in file paths, commit messages,
   author fields and ref names. Patterns are suffix matches of the form `*.ext`.
+- **Scope rule:** an entry may carry `"scope": "metadata"`. It is then checked only
+  in commit metadata (author and committer fields, messages) and ref names, not in
+  file contents or paths. Multi-word terms are hashed as their words joined together,
+  so any spacing or punctuation between the words still matches.
 - The pre-push hook (`.githooks/pre-push`) runs the check on the commits being
   pushed and on the branch names. CI runs it over the full history, plus gitleaks
   with its default rules.

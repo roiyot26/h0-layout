@@ -1,6 +1,6 @@
 {
   "algo": "sha256",
-  "about": "Banned terms, stored as SHA-256 of the lowercased term with separators removed. See scripts/history-check.mjs. Entries with allowIn are not applied to the contents of files matching those patterns.",
+  "about": "Banned terms, stored as SHA-256 of the lowercased term with separators removed (multi-word terms: the words joined with nothing between them). See scripts/history-check.mjs. Entries with allowIn are not applied to the contents of files matching those patterns; entries with scope metadata apply only to commit metadata and ref names.",
   "requiredEmail": "95028994+roiyot26@users.noreply.github.com",
   "entries": [
     {
@@ -50,6 +50,19 @@
       "allowIn": [
         "*.pdf"
       ]
+    },
+    {
+      "h": "7fa86c2a1ca9784d580df8ea80910397f44afeacf1fd22e787ac5ee589f91094"
+    },
+    {
+      "h": "af4976f2ca0b78460afd7f2e3fc2287e0d9ca759524a854ad7d59dcead6867cb"
+    },
+    {
+      "h": "3ac4010a3b47f2f01bf48be89b3e6c46eae068db71936eebebbe6a857e79c512"
+    },
+    {
+      "h": "9285827b8031a1dbe7d1d04eb8a08c8891ee424a8002cfc7dd2df3d82cbff611",
+      "scope": "metadata"
     }
   ]
 }
