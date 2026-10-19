@@ -1,8 +1,9 @@
 #!/usr/bin/env node
 // Byte budget for the built site. Fails the build on any overage; caps are never raised.
 // M0 has one route (the placeholder), so this checks:
-//   - the first-screen set of every HTML page (the page plus the JS, CSS and images
-//     it references), gzip, against the first-screen cap,
+//   - the first-screen set of every HTML page (the page plus the JS, CSS, fonts and
+//     images it references, including fonts pulled in by its CSS), gzip, against the
+//     first-screen cap,
 //   - the whole build output, raw bytes, against the desktop first-load cap.
 // The per-route caps and the per-tier first-load lists from assets.json arrive with M1-M3.
 import { readFileSync, readdirSync, statSync } from 'node:fs';
@@ -27,6 +28,14 @@ for (const page of files.filter((f) => f.endsWith('.html'))) {
   const refs = [...html.matchAll(/(?:src|href)="([^"]+)"/g)]
     .map((m) => m[1])
     .filter((u) => /\.(js|css|woff2|webp|png|jpg|svg)$/.test(u) && !/^https?:/.test(u));
+  // Fonts and images that the page's CSS pulls in count towards the first screen too.
+  for (const css of refs.filter((u) => u.endsWith('.css'))) {
+    const local = files.find((f) => css.endsWith('/' + relative(dist, f).replace(/\\/g, '/')));
+    if (!local) continue;
+    for (const m of readFileSync(local, 'utf8').matchAll(/url\(\s*['"]?([^'")]+)['"]?\s*\)/g)) {
+      if (!/^(data:|https?:)/.test(m[1]) && !refs.includes(m[1])) refs.push(m[1]);
+    }
+  }
   let total = gz(page);
   for (const ref of refs) {
     const local = files.find((f) => ref.endsWith('/' + relative(dist, f).replace(/\\/g, '/')));

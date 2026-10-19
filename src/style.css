@@ -1,3 +1,5 @@
+@font-face{font-family:'IBM Plex Mono';src:url(/fonts/plex-mono-500-sub.woff2) format('woff2');font-weight:500;font-style:normal;font-display:swap}
+@font-face{font-family:'Barlow Semi Condensed';src:url(/fonts/barlow-sc-600-sub.woff2) format('woff2');font-weight:600;font-style:normal;font-display:swap}
 :root {
   --body: #16181a;
   --flap: #23262a;
@@ -11,11 +13,11 @@ html, body { margin: 0; height: 100%; }
 body {
   background: var(--body);
   color: var(--ink);
-  font: 16px/1.5 ui-monospace, 'SFMono-Regular', Menlo, Consolas, 'Liberation Mono', monospace;
   display: grid;
   place-items: center;
   padding: 24px;
 }
+body{font:500 16px/1.5 'IBM Plex Mono',ui-monospace,monospace}
 .station { width: min(100%, 1060px); }
 .board {
   width: 100%;
@@ -27,12 +29,12 @@ body {
 }
 .board caption {
   text-align: left;
-  font: 600 clamp(20px, 3vw, 28px)/1.2 system-ui, sans-serif;
   letter-spacing: 0.12em;
   padding-bottom: 12px;
   border-bottom: 2px solid var(--signal);
   margin-bottom: 8px;
 }
+.board caption{font:600 clamp(20px,3vw,28px)/1.2 'Barlow Semi Condensed',system-ui,sans-serif;color:var(--signal)}
 .board th {
   text-align: left;
   font-size: 13px;

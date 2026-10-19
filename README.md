@@ -12,6 +12,12 @@ real version lands.
 Vite 5, TypeScript (strict) and vanilla three.js r186. No framework. Assets go
 through gltf-transform (meshopt, quantisation, KTX2).
 
+## Fonts
+
+IBM Plex Mono Medium and Barlow Semi Condensed SemiBold, self-hosted as latin
+woff2 subsets in `public/fonts/` (from the IBM Plex and Google Fonts OFL sources).
+Both are under the SIL Open Font License 1.1; the license files sit next to them.
+
 ## Scripts
 
 | Command | What it does |
