@@ -61,3 +61,4 @@ body{font:500 16px/1.5 'IBM Plex Mono',ui-monospace,monospace}
 @media (max-width: 640px) {
   .board td { padding: 10px 8px; }
 }
+@media (max-width:480px){body{padding-inline:16px}}
