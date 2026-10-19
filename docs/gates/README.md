@@ -23,4 +23,6 @@ Findings: numbered, each with severity and the exact check that failed
 Fixes required before the next gate: (PASS WITH FIXES only)
 ```
 
+A gate fix lands as a small PR; a gate reruns only if the fix touches its area, otherwise the gate that raised it checks just the fix.
+
 Records name roles, never people.
