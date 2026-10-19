@@ -10,6 +10,33 @@
   },
   "scripts": {
     "prepare": "git config core.hooksPath .githooks || true",
-    "history-check": "node scripts/history-check.mjs --all"
+    "dev": "vite",
+    "build": "tsc --noEmit && vite build",
+    "preview": "vite preview",
+    "lint": "eslint .",
+    "test": "vitest run",
+    "size": "size-limit",
+    "budget": "node scripts/budget.mjs",
+    "history-check": "node scripts/history-check.mjs --all",
+    "glb-check": "node scripts/glb-check.mjs test/fixtures/cube.glb"
+  },
+  "devDependencies": {
+    "@eslint/js": "9.39.5",
+    "@gltf-transform/cli": "4.5.1",
+    "@gltf-transform/core": "4.5.1",
+    "@gltf-transform/extensions": "4.5.1",
+    "@gltf-transform/functions": "4.5.1",
+    "@size-limit/file": "11.2.0",
+    "eslint": "9.39.5",
+    "globals": "17.13.0",
+    "meshoptimizer": "1.2.0",
+    "size-limit": "11.2.0",
+    "typescript": "5.9.3",
+    "typescript-eslint": "8.71.2",
+    "vite": "5.4.21",
+    "vitest": "3.2.7"
+  },
+  "dependencies": {
+    "three": "0.186.1"
   }
 }
