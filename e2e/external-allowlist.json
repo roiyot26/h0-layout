@@ -1,0 +1,4 @@
+{
+  "comment": "External hosts the link check doesn't fetch: known to block bots or rate-limit CI. Every other external link is fetched, and a failure is only a warning.",
+  "hosts": ["www.linkedin.com", "linkedin.com"]
+}

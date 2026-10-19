@@ -6,3 +6,8 @@ dist-*/
 # Private notes, never committed
 GATES-PRIVATE.md
 TECH-PLAN.md
+
+# Playwright
+e2e/test-results/
+e2e/playwright-report/
+e2e/blob-report/
