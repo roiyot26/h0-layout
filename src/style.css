@@ -29,7 +29,7 @@ body{font:500 16px/1.5 'IBM Plex Mono',ui-monospace,monospace}
   letter-spacing: 0.12em;
   padding-bottom: 12px;
   border-bottom: 2px solid var(--signal);
-  margin-bottom: 8px;
+  margin: 0 12px 8px;
 }
 .board{border-spacing:12px 6px;margin-inline:-12px;width:calc(100% + 24px)}
 .board td{letter-spacing:0.04em}
