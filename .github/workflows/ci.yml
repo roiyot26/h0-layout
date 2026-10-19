@@ -1,0 +1,114 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with: { node-version: 20, cache: npm }
+      - run: npm ci
+      - run: npm run lint
+
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with: { node-version: 20, cache: npm }
+      - run: npm ci
+      - run: npm test
+
+  build:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        site_base: ['/h0-layout/', '/']
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with: { node-version: 20, cache: npm }
+      - run: npm ci
+      - name: Build with SITE_BASE=${{ matrix.site_base }}
+        run: npm run build
+        env:
+          SITE_BASE: ${{ matrix.site_base }}
+      - name: Asset paths use the base
+        run: |
+          grep -q "src=\"${SITE_BASE}assets/" dist/index.html
+        env:
+          SITE_BASE: ${{ matrix.site_base }}
+
+  budget:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with: { node-version: 20, cache: npm }
+      - run: npm ci
+      - run: npm run build
+        env:
+          SITE_BASE: /h0-layout/
+      - name: size-limit
+        run: npm run size
+      - name: Byte budget
+        run: npm run budget
+
+  history:
+    runs-on: ubuntu-latest
+    steps:
+      # Check out the PR head itself, not the merge ref GitHub builds for the run,
+      # so only commits that will really be in the history are checked.
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+      - uses: actions/setup-node@v5
+        with: { node-version: 20 }
+      - name: History check (full history, paths, refs, lockfile)
+        run: node scripts/history-check.mjs --all
+      - name: Lockfile package names
+        run: node scripts/history-check.mjs --text package-lock.json
+
+  gitleaks:
+    runs-on: ubuntu-latest
+    env:
+      GITLEAKS_VERSION: 8.30.1
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+      - name: Install gitleaks
+        run: |
+          base="https://github.com/gitleaks/gitleaks/releases/download/v${GITLEAKS_VERSION}"
+          tarball="gitleaks_${GITLEAKS_VERSION}_linux_x64.tar.gz"
+          curl -sSfLO "$base/$tarball"
+          curl -sSfL "$base/gitleaks_${GITLEAKS_VERSION}_checksums.txt" | grep " $tarball\$" | sha256sum -c -
+          tar -xzf "$tarball" gitleaks
+      - name: gitleaks (full history, default rules)
+        run: ./gitleaks git --redact --verbose --exit-code 1 .
+
+  glb:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with: { node-version: 20, cache: npm }
+      - run: npm ci
+      - name: gltf-transform inspect
+        run: npx gltf-transform inspect test/fixtures/cube.glb
+      - name: meshopt, KTX2 and caps
+        run: npm run glb-check

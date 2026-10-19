@@ -1,0 +1,87 @@
+name: PR preview
+
+# Builds each pull request with SITE_BASE=/h0-layout-preview/pr-<n>/ and publishes the
+# build output to the preview Pages repo at /pr-<n>/. Previews are noindex (robots.txt
+# at the preview root plus a robots meta in every page). Closing the PR removes it.
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, closed]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: preview-repo
+  cancel-in-progress: false
+
+env:
+  PREVIEW_REPO: roiyot26/h0-layout-preview
+  PR: ${{ github.event.pull_request.number }}
+  GIT_AUTHOR_NAME: Roi Yotvat
+  GIT_AUTHOR_EMAIL: 95028994+roiyot26@users.noreply.github.com
+  GIT_COMMITTER_NAME: Roi Yotvat
+  GIT_COMMITTER_EMAIL: 95028994+roiyot26@users.noreply.github.com
+
+jobs:
+  publish:
+    if: github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+        if: github.event.action != 'closed'
+      - uses: actions/setup-node@v5
+        if: github.event.action != 'closed'
+        with: { node-version: 20, cache: npm }
+      - name: Build preview
+        if: github.event.action != 'closed'
+        run: |
+          npm ci
+          npm run build
+          for f in $(find dist -type f); do node scripts/history-check.mjs --text "$f" > /dev/null; done
+          grep -q 'name="robots" content="noindex' dist/index.html
+        env:
+          SITE_BASE: /h0-layout-preview/pr-${{ github.event.pull_request.number }}/
+          NOINDEX: '1'
+      - name: Publish to the preview repo
+        env:
+          DEPLOY_KEY: ${{ secrets.PREVIEW_DEPLOY_KEY }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+          ACTION: ${{ github.event.action }}
+        run: |
+          set -eu
+          mkdir -p ~/.ssh
+          printf '%s\n' "$DEPLOY_KEY" > ~/.ssh/preview_key
+          chmod 600 ~/.ssh/preview_key
+          ssh-keyscan -t ed25519 github.com >> ~/.ssh/known_hosts 2>/dev/null
+          export GIT_SSH_COMMAND="ssh -i ~/.ssh/preview_key -o IdentitiesOnly=yes"
+          git clone --depth 1 "git@github.com:${PREVIEW_REPO}.git" preview
+          cd preview
+          rm -rf "pr-${PR}"
+          if [ "$ACTION" = closed ]; then
+            msg="Remove preview for pull request ${PR}"
+          else
+            cp -R ../dist "pr-${PR}"
+            echo "$HEAD_SHA" > "pr-${PR}/build.txt"
+            msg="Preview for pull request ${PR} at ${HEAD_SHA:0:7}"
+          fi
+          printf 'User-agent: *\nDisallow: /\n' > robots.txt
+          touch .nojekyll
+          git add -A
+          if git diff --cached --quiet; then echo "No change"; exit 0; fi
+          git commit -q -m "$msg"
+          git push -q origin HEAD:main
+          rm -f ~/.ssh/preview_key
+      - name: Wait for the preview to be live
+        if: github.event.action != 'closed'
+        env:
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+        run: |
+          url="https://roiyot26.github.io/h0-layout-preview/pr-${PR}/"
+          for i in $(seq 1 40); do
+            code=$(curl -s -o /dev/null -w '%{http_code}' "$url" || true)
+            built=$(curl -s "${url}build.txt?t=$i" || true)
+            if [ "$code" = 200 ] && [ "$built" = "$HEAD_SHA" ]; then echo "Preview live: $url"; echo "Preview: $url" >> "$GITHUB_STEP_SUMMARY"; exit 0; fi
+            sleep 15
+          done
+          echo "Preview did not return 200 in 10 minutes: $url"; exit 1
