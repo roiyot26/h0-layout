@@ -49,8 +49,7 @@ body{font:500 16px/1.5 'IBM Plex Mono',ui-monospace,monospace}
   font-size: clamp(15px, 2.2vw, 22px);
   white-space: nowrap;
 }
-.board td:first-child { border-radius: 2px 0 0 2px; }
-.board td:last-child { border-radius: 0 2px 2px 0; }
+.board td{border-radius:2px}
 .board .remark { color: var(--signal); }
 .note { color: var(--dim); margin-top: 24px; font-size: 15px; }
 .visually-hidden {
