@@ -57,6 +57,14 @@ Both are under the SIL Open Font License 1.1; the license files sit next to them
   then push main. The web merge button records GitHub as the committer, which the
   check rejects.
 
+## Known audit findings
+
+`npm audit` reports 3 high advisories in the braces and micromatch chain pulled in
+by the glTF Transform CLI (`@gltf-transform/cli`). The CLI is a dev dependency
+only: it runs in CI on this repo's own GLB files and never ships to the site. There
+is no fixed version yet, so we're waiting on an upstream fix. The owner accepted
+this as a dev-only risk.
+
 ## Test GLB
 
 `test/fixtures/cube.glb` is a 12-triangle cube with meshopt compression and a KTX2
