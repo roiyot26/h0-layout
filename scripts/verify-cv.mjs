@@ -237,6 +237,24 @@ for (const row of experience) {
   if (!text.includes(row.employer)) fail(`missing employer from experience.json: ${row.employer}`);
 }
 
+// The Kage bullet is the only place RAG and MCP appear, and the internal course
+// at the current job is gone (it is off the site too).
+{
+  const flat = text.replace(/\s+/g, ' ');
+  const kage =
+    "Brought LLM coding agents into the team's workflow, and rolled out Kage, the AI assistant and second brain I started as a side project (hybrid-search RAG over my notes, served to coding agents over MCP), to speed up how the team plans and ships work.";
+  if (!flat.includes(kage)) fail('Kage bullet missing or reworded');
+  else ok('Kage bullet');
+  for (const term of ['RAG', 'MCP']) {
+    const n = [...flat.matchAll(new RegExp(`\\b${term}\\b`, 'g'))].length;
+    if (n !== 1) fail(`${term} appears ${n} times (want 1, in the Kage bullet)`);
+    if (new RegExp(`\\b${term}\\b`).test(JSON.stringify(experience))) fail(`${term} in cv/experience.json`);
+  }
+  ok('RAG and MCP only in the Kage bullet');
+  if (/internal web development course/i.test(flat)) fail('internal course still in the CV');
+  else ok('no internal course');
+}
+
 // No paid/client 3D claim.
 if (/\b(paid|client)\b.{0,40}\b3\s*d\b/i.test(text) || /\b3\s*d\b.{0,40}\b(paid|client)\b/i.test(text)) {
   fail('claims paid/client 3D work');

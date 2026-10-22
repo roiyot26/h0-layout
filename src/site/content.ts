@@ -13,7 +13,7 @@ export type Co = { on: string; off: string };
 export type Text = string | Co;
 
 export const employers = {
-  codingAcademy: { name: 'Coding Academy', board: 'CODING BOOTCAMP' },
+  codingAcademy: { name: 'Coding Academy', board: 'FULL-STACK COURSE' },
   misterBit: { name: 'Mister Bit', board: 'DEV + TEACHING' },
   moveo: { name: 'Moveo Creative', board: 'DIGITAL AGENCY' },
 } as const;
@@ -100,8 +100,8 @@ export const stations: Station[] = [
     },
     body: [
       {
-        on: 'I taught full-stack courses at Coding Academy to cycles of 60–70 students: JavaScript, React, Node.js, Express and MongoDB. I also worked on company projects there.',
-        off: 'I taught full-stack bootcamp courses to cycles of 60–70 students: JavaScript, React, Node.js, Express and MongoDB. I also worked on company projects there.',
+        on: 'I taught full-stack courses at Coding Academy to cycles of 60–70 students: JavaScript, React, Node.js, Express and MongoDB. Alongside teaching, I also worked on company projects.',
+        off: 'I taught full-stack bootcamp courses to cycles of 60–70 students: JavaScript, React, Node.js, Express and MongoDB. Alongside teaching, I also worked on company projects.',
       },
       "Teaching is where I learned to read other people's code quickly and explain what's wrong with it without making anyone feel stupid.",
     ],
@@ -182,14 +182,7 @@ export const kage = {
 export const nowParts: { title: string; body: Text }[] = [
   {
     title: 'Coding agents in the team.',
-    body: "I brought AI coding agents and custom AI tooling into the team's workflow, aiming for productivity and quality. The team's setup is simpler than Kage. Every project carries its own rules file for the agent. Machine checks run first on every change, and a developer reads what's left: whether it does what was asked, anything touching data or accounts, and any decisions made mid-build.",
-  },
-  {
-    title: 'The course I built for the team.',
-    body: {
-      on: "I built and teach an internal web development course at Moveo Creative. It runs over several lessons, including a full module on building with AI. It's there to help the creative team build production front ends with AI: reading and directing AI output, and shipping with judgment. I've taught it live to the whole team.",
-      off: "I built and teach an internal web development course at work. It runs over several lessons, including a full module on building with AI. It's there to help the creative team build production front ends with AI: reading and directing AI output, and shipping with judgment. I've taught it live to the whole team.",
-    },
+    body: "I brought AI coding agents, and custom tooling around them, into the team's workflow to raise output without lowering quality. The team's setup is simpler than Kage. Every project carries its own rules file for the agent. Machine checks run first on every change, and a developer reads what's left: whether it does what was asked, anything touching data or accounts, and any decisions made mid-build.",
   },
 ];
 
@@ -242,7 +235,7 @@ export const benches: Bench[] = [
 
 export const behindTheScenes = {
   intro:
-    'This site is a portfolio laid out as a 1:87 (H0) model railway: four stations on one loop, one per part of my career. This first version is the plain HTML site. Every page works without JavaScript, and the 3D layout is built on top of it.',
+    'This site is a portfolio laid out as a 1:87 (H0) model railway: four stations on one loop, one per part of my career. This first version is the plain HTML site. Every page works without JavaScript, and the 3D layout will be built on top of it.',
   how: [
     'Every page is static HTML generated from one content file at build time, with Vite and TypeScript and no framework.',
     'Each pull request runs checks before it can merge: links, accessibility, byte budgets, the facts on every page, the CV, and a scan of the public history.',
@@ -250,7 +243,7 @@ export const behindTheScenes = {
   ],
   who: [
     'I set the direction, wrote and approved the content, and approve every release.',
-    'AI agents did much of the engineering, design and review work, each in a set role: building, fixing, design review, UX review, QA and a hiring-rules review. Every change passes those reviews before it reaches me, and nothing goes live without my approval.',
+    'AI agents did much of the engineering, design and review work, each in a set role: building, fixing, QA, and design, UX and hiring-readiness reviews. Every change passes automated checks and QA, the design, UX and hiring-readiness reviews run at each milestone, and nothing goes live without my approval.',
   ],
   privacy:
     'No cookies, no analytics and no third-party requests. Nothing you do here leaves your browser.',

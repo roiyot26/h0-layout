@@ -44,16 +44,31 @@ const routeFor = (path: string): Route => {
 
 type Ctx = SiteOptions & { u: (path: string) => string; tx: (text: Text) => string };
 
-const external = (url: string, label: string, extra = '') =>
-  `<a href="${esc(url)}" rel="noopener"${extra}>${esc(label)}<span class="ext" aria-hidden="true"> ↗</span></a>`;
+// Arrows are inline SVG rather than ↗/← characters: the web fonts have no arrow
+// glyphs, so the characters fell back to a system font, and as SVG they stay out of
+// the link's accessible name. 1em square, drawn in the link's colour.
+const arrow = (d: string, cls: string) =>
+  `<svg class="arrow ${cls}" width="1em" height="1em" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="${d}"/></svg>`;
+const arrowOut = arrow('M4.5 11.5 11.5 4.5M5.5 4.5h6v6', 'ext');
+const arrowBack = arrow('M13 8H3M7.5 3.5 3 8l4.5 4.5', 'back-arrow');
 
-function emailLink(c: Ctx, cls = 'email'): string {
+const external = (url: string, label: string, extra = '') =>
+  `<a href="${esc(url)}" rel="noopener"${extra}>${esc(label)}${arrowOut}</a>`;
+
+function emailLink(c: Ctx, cls = 'email', keepSpace = false): string {
   // Static HTML carries the parts reversed. With JS off the visible text reads
-  // "name [at] domain [dot] tld" (the name is shown reversed back by CSS); the page
-  // script rebuilds the real address on focus, pointerdown or click.
+  // "name [at] domain [dot] tld" (the name is shown reversed back by CSS), and the
+  // link's accessible name is "Email": the reversed parts are hidden from screen
+  // readers and a visually hidden "Email" names the link. (An aria-label would fail
+  // axe's label-in-name rule, because the visible text isn't part of the name.) With
+  // JS on, the page script turns the text into just "Email" and puts the address in
+  // the href only, on focus, pointerdown or click.
+  // keepSpace puts a no-break space after the reversed name: a plain space right
+  // after the right-to-left span gets lost, so "[at]" ran into the name on /contact.
+  const gap = keepSpace ? '&nbsp;' : ' ';
   return (
     `<a class="${cls}" href="${c.u('/contact')}" data-u="${email.user}" data-d="${email.domain}" data-t="${email.tld}">` +
-    `<span class="rev">${email.user}</span> [at] ${[...email.domain].reverse().join('')} [dot] ${[...email.tld].reverse().join('')}</a>`
+    `<span class="visually-hidden">Email</span><span aria-hidden="true"><span class="rev">${email.user}</span>${gap}[at] ${[...email.domain].reverse().join('')} [dot] ${[...email.tld].reverse().join('')}</span></a>`
   );
 }
 
@@ -88,15 +103,21 @@ function layout(c: Ctx, route: Route, body: string, opts: { head?: string; bodyC
     <meta name="theme-color" content="#16181A" />
     <link rel="icon" href="data:," />
     <link rel="preload" href="${c.base}fonts/plex-mono-500-sub.woff2" as="font" type="font/woff2" crossorigin />
+    <link rel="preload" href="${c.base}fonts/barlow-sc-500-sub.woff2" as="font" type="font/woff2" crossorigin />
+    <link rel="preload" href="${c.base}fonts/barlow-sc-600-sub.woff2" as="font" type="font/woff2" crossorigin />
     ${css}${opts.head ? `\n    ${opts.head}` : ''}
     ${js}
   </head>
   <body class="${opts.bodyClass ?? 'page'}">
     <header class="topbar">
+      ${
+        route.path === '/timetable'
+          ? '<a class="corner skip" href="#main">Skip to content</a>'
+          : `<a class="corner skip" href="${c.u('/timetable')}">Skip to the facts</a>`
+      }
       <a class="corner" href="${c.base}"${current('/')}>Departures</a>
-      <a class="corner skip" href="${c.u('/timetable')}"${current('/timetable')}>Skip to the facts</a>
     </header>
-    <main id="main">
+    <main id="main" tabindex="-1">
 ${body}
     </main>
     <footer class="foot">
@@ -115,7 +136,7 @@ ${body}
 function describe(route: Route): string {
   switch (route.path) {
     case '/':
-      return 'Roi Yotvat, full-stack developer. A portfolio laid out as an H0 model railway: four stations, one per part of the career.';
+      return 'Roi Yotvat, full-stack developer. A portfolio laid out as an H0 model railway: four stations, one per part of his career.';
     case '/timetable':
       return 'Every fact on one plain page: roles, years, Kage, side projects and contact.';
     case '/contact':
@@ -146,6 +167,7 @@ function board(c: Ctx): string {
   return `<div class="board-wrap">
 <table class="board">
   <caption>${esc(boardExtra.title)}</caption>
+  <colgroup><col class="c-time" /><col class="c-dest" /><col class="c-plat" /><col class="c-rem" /></colgroup>
   <thead><tr><th scope="col" class="c-time">TIME</th><th scope="col" class="c-dest">DESTINATION</th><th scope="col" class="c-plat">PLATFORM</th><th scope="col" class="c-rem">REMARKS</th></tr></thead>
   <tbody>
     ${rows.join('\n    ')}
@@ -258,7 +280,7 @@ function kagePage(c: Ctx): string {
   const body = `<article class="kage-page">
   <div class="kage-top">
     <h1>${esc(kage.diagramKicker)}</h1>
-    <a class="back" href="${c.u('/now')}">← Back to the City</a>
+    <a class="back" href="${c.u('/now')}">${arrowBack}Back to the City</a>
   </div>
   <figure class="kage-figure">
     ${fill(desktopSvg)}
@@ -313,7 +335,7 @@ function contact(c: Ctx): string {
   const body = `<article class="sheet">
   <h1>Contact</h1>
   <dl class="contact">
-    <div><dt>Email</dt><dd>${emailLink(c)}</dd></div>
+    <div><dt>Email</dt><dd>${emailLink(c, 'email', true)}</dd></div>
     <div><dt>LinkedIn</dt><dd>${external(links.linkedin, 'linkedin.com/in/roi-yotvat-874ba9209')}</dd></div>
     <div><dt>GitHub</dt><dd>${external(links.github, 'github.com/roiyot26')}</dd></div>
     <div><dt>CV</dt><dd>${cvLink(c, 'Download the CV (PDF)')}</dd></div>
@@ -336,7 +358,7 @@ function behind(c: Ctx): string {
   <p>${esc(b.privacy)}</p>
   <h2>Credits</h2>
   ${b.credits.map((x) => `<p>${esc(x)}</p>`).join('\n  ')}
-  <p>${external('https://github.com/roiyot26/h0-layout', 'Source on GitHub')}</p>
+  <p class="src">${external('https://github.com/roiyot26/h0-layout', 'Source on GitHub')}</p>
 </article>`;
   return layout(c, r, body);
 }

@@ -81,7 +81,7 @@ test.describe('hiring checks on a plain home', () => {
       await inFirstViewport(page, 'a[href$="/cv.pdf"]', 'CV link');
       await inFirstViewport(page, 'a[href*="linkedin.com"]', 'LinkedIn link');
       await inFirstViewport(page, 'a[href*="github.com"]', 'GitHub link');
-      await inFirstViewport(page, 'a:text-matches("\\\\[at\\\\].*\\\\[dot\\\\]")', 'obfuscated email');
+      await inFirstViewport(page, 'a:has-text("[at]"):has-text("[dot]")', 'obfuscated email');
     });
   }
 });

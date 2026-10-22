@@ -99,6 +99,14 @@ describe('content and honesty, both company states', () => {
     }
   });
 
+  it('labels the bootcamp row without repeating the destination', () => {
+    const row = (showCompanies: boolean) =>
+      renderSite(opts({ showCompanies })).get('index.html')!.match(/<tr><td class="c-time">2021<\/td>.*?<\/tr>/)![0];
+    expect(row(true)).toContain('<td class="c-rem">CODING ACADEMY</td>');
+    expect(row(false)).toContain('<td class="c-rem">FULL-STACK COURSE</td>');
+    expect(row(false)).not.toContain('CODING BOOTCAMP');
+  });
+
   it('reads the company flag from the environment, on by default', () => {
     expect(flagsFromEnv({}).showCompanies).toBe(true);
     expect(flagsFromEnv({ SHOW_COMPANIES: '1' }).showCompanies).toBe(true);
@@ -174,9 +182,27 @@ describe('email', () => {
     }
   });
 
+  it('names every static email link "Email" for screen readers', () => {
+    for (const [path, html] of renderSite(opts())) {
+      const links = [...html.matchAll(/<a [^>]*data-u="[^>]*>(.*?)<\/a>/g)];
+      for (const [a, inner] of links) {
+        expect(a, path).not.toContain('aria-label');
+        expect(inner, path).toMatch(/^<span class="visually-hidden">Email<\/span><span aria-hidden="true">.*<\/span>$/);
+      }
+    }
+  });
+
   it('falls back to "name [at] domain [dot] tld" with JS off', () => {
     const home = renderSite(opts()).get('index.html')!;
-    expect(home).toMatch(/<a class="email" href="\/h0-layout\/contact\/" data-u="[^"]+" data-d="[^"]+" data-t="[^"]+"><span class="rev">[^<]+<\/span> \[at\] \w+ \[dot\] \w+<\/a>/);
+    expect(home).toMatch(/<a class="email" href="\/h0-layout\/contact\/" data-u="[^"]+" data-d="[^"]+" data-t="[^"]+"><span class="visually-hidden">Email<\/span><span aria-hidden="true"><span class="rev">[^<]+<\/span> \[at\] \w+ \[dot\] \w+<\/span><\/a>/);
+  });
+
+  it('keeps the space before "[at]" on /contact with a no-break space outside the reversed name', () => {
+    const site = renderSite(opts());
+    expect(site.get('contact/index.html')).toMatch(/<span class="rev">[^<]+<\/span>&nbsp;\[at\] /);
+    expect(site.get('contact/index.html')).not.toMatch(/<span class="rev">[^<]*&nbsp;/);
+    // The home button is unchanged.
+    expect(site.get('index.html')).toMatch(/<span class="rev">[^<]+<\/span> \[at\] /);
   });
 });
 
@@ -202,4 +228,49 @@ describe('banned words: site pages vs the CV', () => {
   it('the published CV passes', () => {
     expect(bannedWords('cv.pdf', cvText('public/cv.pdf'))).toEqual([]);
   });
+});
+
+describe('teaching station wording', () => {
+  // The company-projects sentence used to end in "there", which pointed at Coding
+  // Academy with names on and at nothing in particular with names off.
+  const teaching = stations.find((s) => s.id === 'teaching')!;
+  for (const on of [true, false]) {
+    it(`reads right with names ${on ? 'on' : 'off'}`, () => {
+      const text = t(teaching.body[0]!, on);
+      expect(text).toMatch(/ Alongside teaching, I also worked on company projects\.$/);
+      expect(text).not.toMatch(/\bthere\b/);
+      expect(text.includes('Coding Academy')).toBe(on);
+    });
+  }
+});
+
+describe('arrows', () => {
+  // The web fonts have no arrow glyphs, so links use inline SVG arrows instead.
+  for (const showCompanies of [true, false]) {
+    it(`uses no arrow characters, only hidden 1em SVG arrows (names ${showCompanies ? 'on' : 'off'})`, () => {
+      const site = renderSite(opts({ showCompanies }));
+      let arrows = 0;
+      for (const [path, html] of site) {
+        expect(html, path).not.toMatch(/[↗←→]|&(?:nearr|larr|rarr);|&#x?(?:2197|8599|2190|8592|2192|8594);/i);
+        for (const svg of html.match(/<svg class="arrow[^>]*>/g) ?? []) {
+          arrows++;
+          expect(svg).toContain('width="1em" height="1em"');
+          expect(svg).toContain('stroke="currentColor"');
+          expect(svg).toContain('aria-hidden="true" focusable="false"');
+        }
+      }
+      expect(arrows).toBeGreaterThan(0);
+    });
+  }
+});
+
+describe('no internal course', () => {
+  // The internal course at the current job is off the site; the Coding Academy teaching stays.
+  for (const showCompanies of [true, false]) {
+    it(`no page mentions it (names ${showCompanies ? 'on' : 'off'})`, () => {
+      for (const [path, html] of renderSite(opts({ showCompanies }))) {
+        expect(html, path).not.toMatch(/internal web development course|course I built|taught it live|creative team/i);
+      }
+    });
+  }
 });
