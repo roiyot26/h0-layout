@@ -229,3 +229,17 @@ describe('banned words: site pages vs the CV', () => {
     expect(bannedWords('cv.pdf', cvText('public/cv.pdf'))).toEqual([]);
   });
 });
+
+describe('teaching station wording', () => {
+  // The company-projects sentence used to end in "there", which pointed at Coding
+  // Academy with names on and at nothing in particular with names off.
+  const teaching = stations.find((s) => s.id === 'teaching')!;
+  for (const on of [true, false]) {
+    it(`reads right with names ${on ? 'on' : 'off'}`, () => {
+      const text = t(teaching.body[0]!, on);
+      expect(text).toMatch(/ Alongside teaching, I also worked on company projects\.$/);
+      expect(text).not.toMatch(/\bthere\b/);
+      expect(text.includes('Coding Academy')).toBe(on);
+    });
+  }
+});
