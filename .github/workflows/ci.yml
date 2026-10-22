@@ -128,5 +128,6 @@ jobs:
       - name: Verify public/cv.pdf
         run: npm run cv-check
       - name: public/cv.pdf is tagged
-        run: pdfinfo public/cv.pdf | grep -q 'Tagged: *yes'
+        run: |
+          pdfinfo public/cv.pdf | grep -q 'Tagged: *yes'
 
