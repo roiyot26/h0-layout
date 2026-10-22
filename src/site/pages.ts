@@ -51,10 +51,12 @@ function emailLink(c: Ctx, cls = 'email'): string {
   // Static HTML carries the parts reversed. With JS off the visible text reads
   // "name [at] domain [dot] tld" (the name is shown reversed back by CSS); the page
   // script rebuilds the real address on focus, pointerdown or click. Until then the
-  // link's accessible name is "Email", so screen readers don't read the reversed parts.
+  // link's accessible name is "Email": the reversed parts are hidden from screen
+  // readers and a visually hidden "Email" names the link. (An aria-label would fail
+  // axe's label-in-name rule, because the visible text isn't part of the name.)
   return (
-    `<a class="${cls}" href="${c.u('/contact')}" aria-label="Email" data-u="${email.user}" data-d="${email.domain}" data-t="${email.tld}">` +
-    `<span class="rev">${email.user}</span> [at] ${[...email.domain].reverse().join('')} [dot] ${[...email.tld].reverse().join('')}</a>`
+    `<a class="${cls}" href="${c.u('/contact')}" data-u="${email.user}" data-d="${email.domain}" data-t="${email.tld}">` +
+    `<span class="visually-hidden">Email</span><span aria-hidden="true"><span class="rev">${email.user}</span> [at] ${[...email.domain].reverse().join('')} [dot] ${[...email.tld].reverse().join('')}</span></a>`
   );
 }
 

@@ -28,7 +28,7 @@ for (const vp of viewports) {
       await inFirstViewport(page, 'a[href$="/cv.pdf"]', 'CV link');
       await inFirstViewport(page, `a[href="${LINKEDIN}"]`, 'LinkedIn link');
       await inFirstViewport(page, `a[href="${GITHUB}"]`, 'GitHub link');
-      await inFirstViewport(page, 'a:text-matches("\\\\[at\\\\].*\\\\[dot\\\\]")', 'obfuscated email');
+      await inFirstViewport(page, 'a:has-text("[at]"):has-text("[dot]")', 'obfuscated email');
     });
   });
 }

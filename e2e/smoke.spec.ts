@@ -27,17 +27,18 @@ for (const route of pages) {
       expect(response!.status()).toBe(200);
 
       if (route.path === '/' || route.path === '/contact') {
-        const email = page.locator('a:text-matches("\\\\[at\\\\].*\\\\[dot\\\\]")');
+        const email = page.locator('a:has-text("[at]"):has-text("[dot]")');
         await expect(email, `no obfuscated email link on ${route.path}`).not.toHaveCount(0);
         await expect(email.first(), 'obfuscated email link not visible').toBeVisible();
         // Hold the element itself: its text changes once the address is assembled.
         const link = (await email.first().elementHandle())!;
-        expect(await link.getAttribute('aria-label'), 'static email link has no "Email" label').toBe('Email');
+        await expect(email.first(), 'static email link is not named "Email"').toHaveAccessibleName('Email');
         await link.focus();
         await link.click();
         expect(await link.getAttribute('href')).toMatch(/^mailto:[^@\s]+@[^@\s]+\.[a-z]{2,}$/);
         expect(await link.textContent()).toMatch(/^[^@\s]+@[^@\s]+\.[a-z]{2,}$/);
         expect(await link.getAttribute('aria-label'), 'aria-label left on the written address').toBeNull();
+        expect(await link.evaluate((el) => el.querySelector('.visually-hidden, [aria-hidden]')), 'hidden "Email" name left on the written address').toBeNull();
       }
 
       expect(errors, errors.join('\n')).toEqual([]);

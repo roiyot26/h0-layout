@@ -1,8 +1,9 @@
 // The email address is never in the HTML. Each link carries its parts reversed in
 // data attributes; on focus, pointerdown or click the address is rebuilt and the
 // link becomes a mail link. The scheme is assembled too, so the built script holds
-// no literal mail-link prefix. The static link's aria-label ("Email") is dropped
-// once the real address is its text, so the address becomes the accessible name.
+// no literal mail-link prefix. Writing the address replaces the static link's hidden
+// "Email" name and its aria-hidden fallback, so the address becomes the accessible
+// name; any aria-label is dropped too.
 const flip = (s: string | undefined): string => [...(s ?? '')].reverse().join('');
 
 export function assemble(a: HTMLAnchorElement): void {
