@@ -133,6 +133,77 @@ if (!/linkedin\.com\/in\/roi-yotvat-874ba9209/.test(text)) {
   fail('expected LinkedIn slug missing from text');
 } else ok('LinkedIn slug in text');
 
+// Link targets: TECH-PLAN §7 pins the LinkedIn and GitHub URLs exactly. The
+// slug check above reads the visible text only, so read every /URI action in
+// the raw PDF too. The cleaner writes plain objects; object streams would hide
+// annotations from this scan, so they fail closed.
+const PINNED_LINKS = {
+  LinkedIn: { match: /linkedin\.com/i, url: 'https://www.linkedin.com/in/roi-yotvat-874ba9209/' },
+  GitHub: { match: /github\.com/i, url: 'https://github.com/roiyot26' },
+};
+
+function pdfString(raw, i) {
+  // Decode the PDF string object starting at raw[i] ('(' literal or '<' hex).
+  if (raw[i] === '<') {
+    const end = raw.indexOf('>', i);
+    if (end < 0) return null;
+    const hex = raw.slice(i + 1, end).replace(/\s+/g, '');
+    if (!/^[0-9a-f]*$/i.test(hex)) return null;
+    const padded = hex.length % 2 ? `${hex}0` : hex;
+    return Buffer.from(padded, 'hex').toString('latin1');
+  }
+  let out = '';
+  let depth = 0;
+  for (let j = i; j < raw.length; j++) {
+    const c = raw[j];
+    if (c === '\\') {
+      const n = raw[++j];
+      const esc = { n: '\n', r: '\r', t: '\t', b: '\b', f: '\f', '(': '(', ')': ')', '\\': '\\' };
+      if (n in esc) out += esc[n];
+      else if (/[0-7]/.test(n)) {
+        const oct = raw.slice(j, j + 3).match(/^[0-7]{1,3}/)[0];
+        out += String.fromCharCode(parseInt(oct, 8) & 0xff);
+        j += oct.length - 1;
+      } else if (n === '\r') {
+        if (raw[j + 1] === '\n') j++;
+      } else if (n !== '\n') out += n;
+      continue;
+    }
+    if (c === '(') {
+      if (depth++ > 0) out += c;
+    } else if (c === ')') {
+      if (--depth === 0) return out;
+      out += c;
+    } else out += c;
+  }
+  return null;
+}
+
+{
+  const raw = readFileSync(pdf).toString('latin1');
+  if (/\/Type\s*\/ObjStm\b/.test(raw)) {
+    fail('PDF uses object streams; link annotations cannot be checked');
+  } else {
+    const uris = [];
+    for (const m of raw.matchAll(/\/URI\s*(?=[(<])/g)) {
+      const value = pdfString(raw, m.index + m[0].length);
+      if (value === null) fail('a /URI is not a readable PDF string');
+      else uris.push(value);
+    }
+    const linkAnnots = [...raw.matchAll(/\/Subtype\s*\/Link\b/g)].length;
+    if (linkAnnots < uris.length) fail(`${uris.length} /URI actions but only ${linkAnnots} link annotations`);
+    for (const [name, { match, url }] of Object.entries(PINNED_LINKS)) {
+      // Any URI naming the service counts, whatever its scheme or subdomain.
+      const hits = uris.filter((u) => match.test(u));
+      if (hits.length === 0) fail(`no ${name} link annotation`);
+      const wrong = hits.filter((u) => u !== url);
+      if (wrong.length) fail(`${name} link annotation is not ${url}: ${wrong.map((u) => JSON.stringify(u)).join(', ')}`);
+      else if (hits.length === 1) ok(`${name} link annotation ${url}`);
+      else if (hits.length > 1) ok(`${name} link annotations (${hits.length}) all ${url}`);
+    }
+  }
+}
+
 // Phone: Israeli mobile / international forms.
 const phone =
   /(?:\+972[-\s]?)?(?:0?5\d[-\s]?\d{3}[-\s]?\d{4})|(?:\+\d{1,3}[-\s]?)?\(?\d{2,3}\)?[-\s]?\d{3}[-\s]?\d{4}/;
