@@ -60,4 +60,31 @@ describe('dist-guard', () => {
       expect(r.out).not.toContain(host);
     });
   });
+
+  describe('phone numbers, using the repo findPhone rule', () => {
+    const cases: [string, string][] = [
+      ['dotted mobile', ['050', '123', '4567'].join('.')],
+      ['972 without the plus', ['972', '50', '123', '4567'].join('-')],
+      ['landline', ['03', '123', '4567'].join('-')],
+      ['number split across tags', `${['050', '123'].join('-')}<span>-4567</span>`],
+      ['number with entity separators', ['050', '123', '4567'].join('&#45;')],
+    ];
+    for (const [name, body] of cases) {
+      it(`fails on ${name}`, () => {
+        const r = run({ 'index.html': page(body) });
+        expect(r.code).toBe(1);
+        expect(r.out).toMatch(/FAIL index\.html:\d+: phone number/);
+        expect(r.out).not.toMatch(/\d{3}[-.]\d{3}/);
+      });
+    }
+
+    it('ignores versions, sizes and ids', () => {
+      expect(run({ 'index.html': page('three 0.186.1, 5331 mm, 95028994') }).code).toBe(0);
+    });
+
+    it('ignores float literals in bundled code', () => {
+      const js = `const k=vec3(${['0', '5', '87'].join('.').replace('.87', '87')}00000000,0.2126729,0.0721750);`;
+      expect(run({ 'index.js': js }).code).toBe(0);
+    });
+  });
 });

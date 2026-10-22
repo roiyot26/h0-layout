@@ -10,16 +10,33 @@
 import { readFile, readdir, stat } from 'node:fs/promises';
 import { join, relative, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { findPhone } from '../scripts/history-check.mjs';
+
+// The repo's own phone rule (history-check), so dotted mobiles, 972 without the plus
+// and landlines are caught, plus this guard's earlier pattern so nothing scans less.
+const PHONE_EXTRA = /(?:\+972|\b0)[-\s]?5\d(?:[-\s]?\d){7}\b|\+\d{1,3}[-\s]?\(?\d{2,4}\)?(?:[-\s]?\d{2,4}){2,3}/;
+// Float literals such as 0.5872000000 in a bundled shader read as a trunk 0 and a
+// mobile number. No phone format starts with "0.", so they are masked first.
+const FLOAT = /(?<![\w.])0\.\d+(?![\w.])/g;
+const maskFloats = (s) => s.replace(FLOAT, (m) => m.replace(/\d/g, 'x'));
+// findPhone only answers yes or no, so locate the line it fires on.
+function phoneHit(raw) {
+  const s = maskFloats(raw);
+  if (!findPhone(s)) return null;
+  let index = 0;
+  for (const line of s.split('\n')) {
+    if (findPhone(line)) return { index };
+    index += line.length + 1;
+  }
+  return { index: 0 };
+}
 
 const TEXT = /\.(html?|js|mjs|cjs|css|json|xml|txt|svg|webmanifest|map)$/i;
 const rules = [
   ['mailto', (s) => /mailto:/i.exec(s)],
   ['email address', (s) => /[A-Z0-9._%+-]+@[A-Z0-9-]+(?:\.[A-Z0-9-]+)*\.[A-Z]{2,}/i.exec(s)],
   ['entity-encoded @', (s) => /&#(?:0*64|x0*40)|&commat/i.exec(s)],
-  [
-    'phone number',
-    (s) => /(?:\+972|\b0)[-\s]?5\d(?:[-\s]?\d){7}\b|\+\d{1,3}[-\s]?\(?\d{2,4}\)?(?:[-\s]?\d{2,4}){2,3}/.exec(s),
-  ],
+  ['phone number', (s) => PHONE_EXTRA.exec(s) ?? phoneHit(s)],
 ];
 
 // Named entities that can hide parts of an address or a number. Unknown names are left
