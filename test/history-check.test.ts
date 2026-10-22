@@ -59,6 +59,15 @@ describe('pairs and scopes', () => {
 });
 
 describe('findPhone', () => {
+  it('still flags digit runs that look like mobiles when they appear as text', () => {
+    // Built at runtime so the file itself holds no phone-number shape.
+    // (Raw PDF font-width tables used to trip this; *.pdf content is now scanned
+    // via pdftotext in textForScan, so those streams no longer reach findPhone.)
+    const widths = ['0', '561', '0', '0', '0', '0', '0', '0', '0'].join(' ');
+    expect(findPhone(widths)).toBe(true);
+    expect(findPhone('Moveo Creative · Mister Bit · Coding Academy')).toBe(false);
+  });
+
   it('flags phone-number shapes', () => {
     // Built at runtime so the file itself holds no phone-number shape.
     const join = (sep: string, ...parts: string[]) => parts.join(sep);

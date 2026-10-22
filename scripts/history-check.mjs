@@ -34,7 +34,8 @@
 
 import { execFileSync } from 'node:child_process';
 import { createHash } from 'node:crypto';
-import { readFileSync } from 'node:fs';
+import { readFileSync, writeFileSync, unlinkSync } from 'node:fs';
+import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -117,6 +118,38 @@ const problems = [];
 function report(where, what) {
   problems.push(`${where}: ${what}`);
 }
+
+function textForScan(path, rawLatin1) {
+  // PDF streams contain font-width tables that look like phone numbers to the
+  // regex. Scan the page text and the metadata instead (email allowIn still
+  // applies).
+  if (!path || !path.toLowerCase().endsWith('.pdf')) return rawLatin1;
+  const tmp = join(tmpdir(), `h0-hist-${process.pid}-${Math.random().toString(16).slice(2)}.pdf`);
+  try {
+    writeFileSync(tmp, Buffer.from(rawLatin1, 'latin1'));
+    const run = (cmd, args) => execFileSync(cmd, args, {
+      maxBuffer: 64 << 20,
+      stdio: ['ignore', 'pipe', 'pipe'],
+    }).toString('utf8');
+    const pageText = run('pdftotext', ['-layout', tmp, '-']);
+    // Every document-info field, custom keys and multi-line values included,
+    // plus the XMP packet. Their size, date and ID lines don't match the
+    // phone patterns, so nothing is filtered out.
+    const info = run('pdfinfo', ['-custom', tmp]);
+    const xmp = run('pdfinfo', ['-meta', tmp]);
+    return [pageText, info, xmp].join('\n');
+  } catch (err) {
+    // Fail closed: a PDF we cannot read as text is a problem, not a pass.
+    const why = err.code === 'ENOENT'
+      ? `${err.path ?? 'pdftotext'} not found (install poppler-utils)`
+      : (err.stderr?.toString().trim().split('\n').pop() || err.message);
+    report(path, `could not extract PDF text: ${why}`);
+    return '';
+  } finally {
+    try { unlinkSync(tmp); } catch { /* ignore */ }
+  }
+}
+
 function scanText(where, text, path = null, context = path ? 'content' : 'metadata') {
   const hits = findBanned(text, path, entries, context);
   if (hits.length) report(where, `banned term (hash ${hits.join(', ')})`);
@@ -143,7 +176,7 @@ function scanCommit(sha7) {
     seenBlobs.add(key);
     scanText(`${at} path`, path, null, 'path');
     const content = git(['cat-file', 'blob', blob]).toString('latin1');
-    scanText(`${at} ${path}`, content, path);
+    scanText(`${at} ${path}`, textForScan(path, content), path);
   }
 }
 
@@ -187,7 +220,7 @@ if (mode === '--all') {
   finish('push', count);
 } else if (mode === '--text') {
   const path = process.argv[3];
-  scanText(path, readFileSync(path).toString('latin1'), path);
+  scanText(path, textForScan(path, readFileSync(path).toString('latin1')), path);
   finish(path, 0);
 } else if (mode) {
   console.error('usage: history-check.mjs --all | --pre-push | --text FILE');
