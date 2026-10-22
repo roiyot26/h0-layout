@@ -155,7 +155,8 @@ test('/ has no horizontal overflow @ 320', async ({ page }) => {
   expect(width).toBeLessThanOrEqual(320);
 });
 
-// M1-03: Skip is the first Tab stop on every page, and sits left of Departures.
+// M1-03: Skip is the first Tab stop on every page, and sits right of Departures
+// (the STYLE corner map: Departures top-left, Skip top-right).
 test('the first Tab focuses Skip on every page', async ({ page }) => {
   for (const route of pages) {
     await page.goto(route.path === '/' ? './' : route.path.replace(/^\//, ''));
@@ -164,7 +165,7 @@ test('the first Tab focuses Skip on every page', async ({ page }) => {
     expect(focused, route.path).toBe('corner skip');
     const skip = await page.locator('.topbar .skip').boundingBox();
     const departures = await page.locator('.topbar .corner:not(.skip)').boundingBox();
-    expect(skip!.x, route.path).toBeLessThan(departures!.x);
+    expect(departures!.x, route.path).toBeLessThan(skip!.x);
   }
 });
 

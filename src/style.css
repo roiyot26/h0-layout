@@ -50,8 +50,9 @@ main { max-width: 1120px; margin: 0 auto; }
 a { color: inherit; }
 :focus-visible { outline: 3px solid var(--signal); outline-offset: 2px; }
 
-/* Corners: Skip to the facts top-left and first in the Tab order, Departures
-   top-right (fix F11, M1-03). DOM order matches the visual order. */
+/* Corners: Departures top-left, Skip top-right (the STYLE corner map). Skip comes
+   first in the DOM so it is the first Tab stop (fix F11, M1-03), and order: 1
+   moves it back to the right-hand corner. */
 .topbar {
   position: sticky; top: 0; z-index: 2;
   display: flex; justify-content: space-between; gap: 12px;
@@ -63,6 +64,7 @@ a { color: inherit; }
   font: 600 16px/1 var(--sans); letter-spacing: 0.04em; text-decoration: none;
   color: var(--ink-light); border: 2px solid var(--dim); border-radius: 3px;
 }
+.topbar .corner.skip { order: 1; min-height: 48px; } /* STYLE §11: Skip is 48 px tall */
 .corner:hover { border-color: var(--ink-light); }
 .corner[aria-current='page'] { border-color: var(--signal); }
 
@@ -80,6 +82,7 @@ a { color: inherit; }
 }
 .contact-links a:hover { border-color: var(--ink-light); }
 .home .contact-links a[download] { background: transparent; color: #f2eee4; border-color: var(--signal); }
+.home .contact-links a[download]:hover { border-color: var(--ink-light); }
 .rev { unicode-bidi: bidi-override; direction: rtl; }
 
 /* ---------- Departure board (51 cells: 7 · 11 · 8 · 25) ---------- */

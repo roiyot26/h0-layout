@@ -121,3 +121,31 @@ test('the first Tab focuses Skip on every route (JS on)', async ({ page }) => {
     expect(focused.text, route.path).toBe(route.path === '/timetable' ? 'Skip to content' : 'Skip to the facts');
   }
 });
+
+// #21: the home CV button gets the same hover cue as the other contact links.
+test('the home CV button changes its border on hover', async ({ page }) => {
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await page.goto('./');
+  const cv = page.locator('.home .contact-links a[download]');
+  const border = () => cv.evaluate((e) => getComputedStyle(e).borderTopColor);
+  const rest = await border();
+  await cv.hover();
+  await expect.poll(border).not.toBe(rest);
+  expect(await border()).toBe('rgb(242, 238, 228)');
+});
+
+// #22: Skip stays first in the Tab order but sits in the top-right corner, with
+// Departures top-left, as in the STYLE corner map.
+for (const width of [1440, 360]) {
+  test(`the top bar corners: Departures left, Skip right @ ${width}`, async ({ page }) => {
+    await page.setViewportSize({ width, height: 800 });
+    await page.goto('./');
+    const dep = await page.locator('.topbar a.corner:not(.skip)').boundingBox();
+    const skip = await page.locator('.topbar a.corner.skip').boundingBox();
+    const bar = await page.locator('.topbar').boundingBox();
+    expect(dep!.x).toBeCloseTo(bar!.x, 0);
+    expect(skip!.x + skip!.width).toBeCloseTo(bar!.x + bar!.width, 0);
+    expect(dep!.x).toBeLessThan(skip!.x);
+    expect(skip!.height).toBeGreaterThanOrEqual(48);
+  });
+}
