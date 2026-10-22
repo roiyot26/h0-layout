@@ -38,7 +38,7 @@ function makePdf(text: string, widths: number[] = []): Buffer {
 
 function scan(name: string, bytes: Buffer): { code: number; out: string } {
   const file = join(dir, name);
-  writeFileSync(file, bytes);
+  writeFileSync(file, new Uint8Array(bytes));
   try {
     const out = execFileSync('node', ['scripts/history-check.mjs', '--text', file], { stdio: 'pipe' }).toString();
     return { code: 0, out };
