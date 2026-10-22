@@ -53,6 +53,20 @@ if ((meta.Title || '') !== 'Roi Yotvat — CV' && (meta.Title || '') !== 'Roi Yo
 if (!/^Tagged: *yes$/m.test(info.stdout)) fail('PDF is not tagged (want Tagged: yes)');
 else ok('Tagged: yes');
 
+// Document language: the catalog (/Root) must carry /Lang (en). The cleaner
+// writes plain objects, so the catalog is readable without a PDF library.
+{
+  const raw = readFileSync(pdf).toString('latin1');
+  const rootRef = [...raw.matchAll(/\/Root\s+(\d+)\s+(\d+)\s+R/g)].pop();
+  const catalog = rootRef
+    ? raw.match(new RegExp(`(?:^|\\s)${rootRef[1]}\\s+${rootRef[2]}\\s+obj([\\s\\S]*?)endobj`))
+    : null;
+  const lang = catalog?.[1].match(/\/Lang\s*\(([^)]*)\)/)?.[1];
+  if (!catalog) fail('catalog object not found (object streams are not supported here)');
+  else if (lang !== 'en') fail(`/Lang=${JSON.stringify(lang)} (want "en")`);
+  else ok('/Lang en');
+}
+
 const metaDump = spawnSync('pdfinfo', ['-meta', pdf], { encoding: 'utf8' });
 const metaText = `${info.stdout}\n${metaDump.stdout || ''}`;
 const metaBad = [
