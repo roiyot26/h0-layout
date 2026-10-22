@@ -73,8 +73,9 @@ must reference their textures. Rebuild it with `scripts/make-test-glb.mjs`.
 
 ## Gates
 
-Each milestone ends in four written gates (design, QA, hiring rules, owner
-approval). Records live in `docs/gates/` and name roles only.
+From M1 on, each milestone ends in five written gates, in this order: design, UX,
+QA, hiring rules, owner approval. Records live in `docs/gates/` as
+`M<n>-<gate>-<sha7>.md` and name roles only.
 
 ## Licence
 
