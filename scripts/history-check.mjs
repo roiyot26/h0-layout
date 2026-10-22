@@ -121,19 +121,32 @@ function report(where, what) {
 
 function textForScan(path, rawLatin1) {
   // PDF streams contain font-width tables that look like phone numbers to the
-  // regex. Scan the extracted text instead (email allowIn still applies).
+  // regex. Scan the page text and the metadata instead (email allowIn still
+  // applies).
   if (!path || !path.toLowerCase().endsWith('.pdf')) return rawLatin1;
   const tmp = join(tmpdir(), `h0-hist-${process.pid}-${Math.random().toString(16).slice(2)}.pdf`);
   try {
     writeFileSync(tmp, Buffer.from(rawLatin1, 'latin1'));
-    return execFileSync('pdftotext', ['-layout', tmp, '-'], {
+    const run = (cmd, args) => execFileSync(cmd, args, {
       maxBuffer: 64 << 20,
       stdio: ['ignore', 'pipe', 'pipe'],
     }).toString('utf8');
+    const pageText = run('pdftotext', ['-layout', tmp, '-']);
+    // Document-info fields, filtered: the size and date lines would trip the
+    // phone pattern.
+    const info = run('pdfinfo', [tmp])
+      .split('\n')
+      .filter((l) => /^(Title|Subject|Keywords|Author|Creator|Producer):/.test(l))
+      .join('\n');
+    // XMP metadata, minus timestamps and document IDs for the same reason.
+    const xmp = run('pdfinfo', ['-meta', tmp])
+      .replace(/\d{4}-\d{2}-\d{2}T[\d:.+\-Z]*/g, ' ')
+      .replace(/uuid:[0-9a-f-]+/gi, ' ');
+    return [pageText, info, xmp].join('\n');
   } catch (err) {
     // Fail closed: a PDF we cannot read as text is a problem, not a pass.
     const why = err.code === 'ENOENT'
-      ? 'pdftotext not found (install poppler-utils)'
+      ? `${err.path ?? 'pdftotext'} not found (install poppler-utils)`
       : (err.stderr?.toString().trim().split('\n').pop() || err.message);
     report(path, `could not extract PDF text: ${why}`);
     return '';

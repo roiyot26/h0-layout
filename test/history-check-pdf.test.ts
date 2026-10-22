@@ -12,10 +12,15 @@ afterAll(() => rmSync(dir, { recursive: true, force: true }));
 
 // A minimal one-page PDF with a standard font and `text` drawn on the page.
 // With `widths`, the font dictionary also holds an uncompressed widths table.
-function makePdf(text: string, widths: number[] = []): Buffer {
+// `info` adds a document-info dictionary and `xmp` an XMP metadata stream.
+function makePdf(
+  text: string,
+  widths: number[] = [],
+  meta: { info?: Record<string, string>; xmp?: string } = {},
+): Buffer {
   const content = `BT /F1 12 Tf 72 720 Td (${text}) Tj ET`;
   const objs = [
-    '<< /Type /Catalog /Pages 2 0 R >>',
+    meta.xmp ? '<< /Type /Catalog /Pages 2 0 R /Metadata 6 0 R >>' : '<< /Type /Catalog /Pages 2 0 R >>',
     '<< /Type /Pages /Kids [3 0 R] /Count 1 >>',
     '<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Contents 4 0 R /Resources << /Font << /F1 5 0 R >> >> >>',
     `<< /Length ${content.length} >>\nstream\n${content}\nendstream`,
@@ -23,6 +28,8 @@ function makePdf(text: string, widths: number[] = []): Buffer {
       ? `<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica /FirstChar 32 /LastChar ${31 + widths.length} /Widths [${widths.join(' ')}] >>`
       : '<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>',
   ];
+  if (meta.xmp) objs.push(`<< /Type /Metadata /Subtype /XML /Length ${meta.xmp.length} >>\nstream\n${meta.xmp}\nendstream`);
+  if (meta.info) objs.push(`<< ${Object.entries(meta.info).map(([k, v]) => `/${k} (${v})`).join(' ')} >>`);
   let out = '%PDF-1.4\n';
   const offsets: number[] = [];
   objs.forEach((o, i) => {
@@ -32,7 +39,8 @@ function makePdf(text: string, widths: number[] = []): Buffer {
   const xref = out.length;
   out += `xref\n0 ${objs.length + 1}\n0000000000 65535 f \n`;
   for (const off of offsets) out += `${String(off).padStart(10, '0')} 00000 n \n`;
-  out += `trailer\n<< /Size ${objs.length + 1} /Root 1 0 R >>\nstartxref\n${xref}\n%%EOF\n`;
+  const infoRef = meta.info ? ` /Info ${objs.length} 0 R` : '';
+  out += `trailer\n<< /Size ${objs.length + 1} /Root 1 0 R${infoRef} >>\nstartxref\n${xref}\n%%EOF\n`;
   return Buffer.from(out, 'latin1');
 }
 
@@ -52,6 +60,11 @@ function scan(name: string, bytes: Buffer): { code: number; out: string } {
 const widthRun = [0, 561, 0, 0, 0, 0, 0, 0, 0, 0, 0];
 const phoneText = ['054', ['123', '4567'].join('')].join('-');
 
+const xmp = (fields: string) => '<?xpacket begin="" id="W5M0MpCehiHzreSzNTczkc9d"?>'
+  + '<x:xmpmeta xmlns:x="adobe:ns:meta/"><rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#">'
+  + '<rdf:Description rdf:about="" xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:xmp="http://ns.adobe.com/xap/1.0/" xmlns:xmpMM="http://ns.adobe.com/xap/1.0/mm/">'
+  + `${fields}</rdf:Description></rdf:RDF></x:xmpmeta><?xpacket end="w"?>`;
+
 describe('history check on PDFs', () => {
   it('passes a PDF whose only digit runs are in its widths table', () => {
     const r = scan('widths.pdf', makePdf('Tel Aviv', widthRun));
@@ -61,6 +74,22 @@ describe('history check on PDFs', () => {
     const r = scan('phone.pdf', makePdf(`Call ${phoneText}`));
     expect(r.code).toBe(1);
     expect(r.out).toMatch(/phone number pattern/);
+  });
+  it('flags a phone number that is only in the Author field', () => {
+    const r = scan('author.pdf', makePdf('Tel Aviv', [], { info: { Title: 'CV', Author: phoneText } }));
+    expect(r.code).toBe(1);
+    expect(r.out).toMatch(/phone number pattern/);
+  });
+  it('flags a phone number that is only in the XMP metadata', () => {
+    const r = scan('xmp.pdf', makePdf('Tel Aviv', [], { xmp: xmp(`<dc:creator>${phoneText}</dc:creator>`) }));
+    expect(r.code).toBe(1);
+    expect(r.out).toMatch(/phone number pattern/);
+  });
+  it('does not flag XMP timestamps or document IDs', () => {
+    const fields = '<xmp:CreateDate>2026-10-22T12:38:40+03:00</xmp:CreateDate>'
+      + '<xmpMM:DocumentID>uuid:0b6a1c2e-1234-4a5b-9c8d-001122334455</xmpMM:DocumentID>';
+    const r = scan('dates.pdf', makePdf('Tel Aviv', [], { info: { Title: 'CV' }, xmp: xmp(fields) }));
+    expect(r.code, r.out).toBe(0);
   });
   it('fails closed on a PDF it cannot read', () => {
     const r = scan('corrupt.pdf', Buffer.from('%PDF-1.4\nnot really a pdf\n', 'latin1'));
