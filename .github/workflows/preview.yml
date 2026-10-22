@@ -36,6 +36,7 @@ jobs:
       - name: Build preview
         if: github.event.action != 'closed'
         run: |
+          sudo apt-get update -qq && sudo apt-get install -y -qq poppler-utils
           npm ci
           npm run build
           for f in $(find dist -type f); do node scripts/history-check.mjs --text "$f" > /dev/null; done

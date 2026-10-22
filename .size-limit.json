@@ -31,5 +31,12 @@
     "limit": "50 KB",
     "gzip": false,
     "brotli": false
+  },
+  {
+    "name": "CV PDF",
+    "path": "dist/cv.pdf",
+    "limit": "300 KB",
+    "gzip": false,
+    "brotli": false
   }
 ]
