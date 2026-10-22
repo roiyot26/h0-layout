@@ -33,6 +33,11 @@ export default defineConfig({
       use: { javaScriptEnabled: false, browserName: 'chromium' },
     },
     {
+      name: 'smoke',
+      testMatch: 'smoke.spec.ts',
+      use: { javaScriptEnabled: true, browserName: 'chromium' },
+    },
+    {
       name: 'axe',
       testMatch: 'axe.spec.ts',
       use: { javaScriptEnabled: true, browserName: 'chromium' },

@@ -193,3 +193,11 @@ jobs:
           SITE_BASE: /h0-layout/
           DIST_DIR: ${{ github.workspace }}/dist
           PORT: '4173'
+      - name: Smoke (JS on, 1440 and 390)
+        working-directory: e2e
+        run: npm run smoke
+        env:
+          CI: 'true'
+          SITE_BASE: /h0-layout/
+          DIST_DIR: ${{ github.workspace }}/dist
+          PORT: '4173'
