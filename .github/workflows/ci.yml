@@ -77,6 +77,8 @@ jobs:
           ref: ${{ github.event.pull_request.head.sha || github.sha }}
       - uses: actions/setup-node@v5
         with: { node-version: 20 }
+      - name: Install poppler (pdftotext for *.pdf scans)
+        run: sudo apt-get update -qq && sudo apt-get install -y -qq poppler-utils
       - name: History check (full history, paths, refs, lockfile)
         run: node scripts/history-check.mjs --all
       - name: Lockfile package names
