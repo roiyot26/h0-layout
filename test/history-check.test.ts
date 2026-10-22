@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 // @ts-expect-error plain ESM script without types
-import { findBanned, findPhone, hashTerm, tokenize } from '../scripts/history-check.mjs';
+import { blankIds, findBanned, findPhone, findPhoneOutsideIds, hashTerm, tokenize } from '../scripts/history-check.mjs';
 
 // The real list holds hashes only. These tests use a stand-in list built from
 // neutral words, so no banned term has to appear here.
@@ -77,5 +77,46 @@ describe('findPhone', () => {
   });
   it('ignores versions, sizes and ids', () => {
     expect(findPhone('three 0.186.1, 5331 mm, 95028994')).toBe(false);
+  });
+});
+
+describe('ID blanking before the phone scan', () => {
+  // Built at runtime so the file itself holds no phone-number shape. The hex
+  // head of each ID reads like a mobile number on its own.
+  const head = ['a0', '50', '1234'].join('');
+  const guid = [head, '567a', 'cdef', 'abcd', 'ef0123456789'].join('-');
+  const join = (sep: string, ...parts: string[]) => parts.join(sep);
+
+  it('the raw IDs would trip the phone check', () => {
+    expect(findPhone(guid)).toBe(true);
+    expect(findPhone(`xmpMM:InstanceID="xmp.iid:${guid}"`)).toBe(true);
+  });
+
+  it('a bare GUID, uuid: or xmp.iid/did/id value no longer trips it', () => {
+    expect(findPhoneOutsideIds(guid)).toBe(false);
+    expect(findPhoneOutsideIds(`<xmpMM:DocumentID>uuid:${guid}</xmpMM:DocumentID>`)).toBe(false);
+    expect(findPhoneOutsideIds(`xmpMM:InstanceID="xmp.iid:${guid}"`)).toBe(false);
+    expect(findPhoneOutsideIds(`xmp.did:${guid.toUpperCase()}`)).toBe(false);
+    expect(findPhoneOutsideIds(`xmp.id:${guid.replace(/-/g, '')}`)).toBe(false);
+  });
+
+  it('a real phone-shaped number still trips it, next to an ID or alone', () => {
+    const phone = join('-', '050', '123', '4567');
+    expect(findPhoneOutsideIds(phone)).toBe(true);
+    expect(findPhoneOutsideIds(`xmp.iid:${guid} call ${phone}`)).toBe(true);
+    expect(findPhoneOutsideIds(join(' ', '+972', '50', '123', '4567'))).toBe(true);
+  });
+
+  it('blanks only exact ID shapes', () => {
+    expect(blankIds(`uuid:${guid}`)).toBe('[id]');
+    // One hex digit short of a GUID is left alone.
+    const short = guid.slice(0, -1);
+    expect(blankIds(short)).toBe(short);
+    expect(findPhoneOutsideIds(short)).toBe(true);
+  });
+
+  it('leaves the text the banned-term scan sees untouched', () => {
+    expect(findBanned(`semaphore uuid:${guid}`, null, table)).toHaveLength(1);
+    expect(findBanned(blankIds(`uuid:${guid}`), null, table)).toHaveLength(0);
   });
 });
