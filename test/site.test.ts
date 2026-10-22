@@ -1,7 +1,7 @@
 import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 import { pages, routes, outFile } from '../scripts/routes.mjs';
-import { checkSite, emailFromContent, EMPLOYERS, readable } from '../scripts/content-check.mjs';
+import { bannedWords, checkSite, CV_PATH, cvText, emailFromContent, EMPLOYERS, readable } from '../scripts/content-check.mjs';
 import { benches, email, kage, links, stations, t } from '../src/site/content';
 import { flagsFromEnv, renderSite, type SiteOptions } from '../src/site/pages';
 import experience from '../cv/experience.json';
@@ -177,5 +177,29 @@ describe('email', () => {
   it('falls back to "name [at] domain [dot] tld" with JS off', () => {
     const home = renderSite(opts()).get('index.html')!;
     expect(home).toMatch(/<a class="email" href="\/h0-layout\/contact\/" data-u="[^"]+" data-d="[^"]+" data-t="[^"]+"><span class="rev">[^<]+<\/span> \[at\] \w+ \[dot\] \w+<\/a>/);
+  });
+});
+
+describe('banned words: site pages vs the CV', () => {
+  const cvLine = 'Built and ran the platform, from first release to maintenance.';
+
+  it('allows "maintenance" in the CV text', () => {
+    expect(CV_PATH).toBe('cv.pdf');
+    expect(bannedWords('cv.pdf', cvLine)).toEqual([]);
+  });
+
+  it('still bans "maintenance" on a site page', () => {
+    expect(bannedWords('index.html', cvLine)).toHaveLength(1);
+    expect(bannedWords('timetable/index.html', 'Maintenance window')).toHaveLength(1);
+    expect(bannedWords('cv/index.html', cvLine)).toHaveLength(1);
+  });
+
+  it('still bans SLA and the other words in the CV', () => {
+    expect(bannedWords('cv.pdf', 'Kept a 99.9% SLA')).toHaveLength(1);
+    expect(bannedWords('cv.pdf', 'on-call rota and maintenance')).toHaveLength(1);
+  });
+
+  it('the published CV passes', () => {
+    expect(bannedWords('cv.pdf', cvText('public/cv.pdf'))).toEqual([]);
   });
 });

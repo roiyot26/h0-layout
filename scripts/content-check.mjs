@@ -1,16 +1,41 @@
 #!/usr/bin/env node
-// Content and honesty checks on the built site (TECH-PLAN §7, content doc v4.1).
+// Content and honesty checks on the built site (TECH-PLAN §7, content doc v4.2).
 //
 //   node scripts/content-check.mjs [dist] [--companies on|off]
 //
 // The same checks run in Vitest on the rendered pages (test/site.test.ts), and in CI
 // on two real builds: SHOW_COMPANIES on (the default) and off. Problems are reported
 // by rule and file; matched text is never echoed.
+import { execFileSync } from 'node:child_process';
 import { readFileSync, readdirSync, statSync } from 'node:fs';
 import { join, relative } from 'node:path';
 
 export const EMPLOYERS = ['Moveo Creative', 'Mister Bit', 'Coding Academy'];
 const BANNED_WORDS = ['SLA', 'maintenance', 'on-call', 'retrieval-tracer', 'duck', 'local only', 'why local', 'one machine'];
+// Where a banned word is allowed. The ban is on the site pages; the CV (cv.pdf)
+// may say "maintenance" (content doc §7). Every other word, SLA included, is
+// banned in the CV too.
+const ALLOWED_IN = { maintenance: ['cv.pdf'] };
+export const CV_PATH = 'cv.pdf';
+
+/**
+ * Banned words found in one file's text. `path` is dist-relative.
+ * @returns {string[]} problems
+ */
+export function bannedWords(path, text) {
+  const problems = [];
+  for (const w of BANNED_WORDS) {
+    if (ALLOWED_IN[w]?.includes(path)) continue;
+    const re = new RegExp(`\\b${w.replace(/[-]/g, '\\-')}\\b`, w === 'SLA' ? '' : 'i');
+    if (re.test(text)) problems.push(`${path}: banned word "${w}"`);
+  }
+  return problems;
+}
+
+/** The CV's text as a reader sees it (needs poppler's pdftotext). */
+export function cvText(pdfPath) {
+  return execFileSync('pdftotext', ['-layout', pdfPath, '-'], { maxBuffer: 64 << 20 }).toString('utf8');
+}
 const TEXT = /\.(html?|js|css|json|xml|txt|svg)$/i;
 
 /** Visible text plus the attributes a reader can hear or see (alt, aria-label, title). */
@@ -38,10 +63,7 @@ export function checkSite(files, { showCompanies, email }) {
   const count = (text, word) => text.split(word).length - 1;
 
   for (const [path, text] of all) {
-    for (const w of BANNED_WORDS) {
-      const re = new RegExp(`\\b${w.replace(/[-]/g, '\\-')}\\b`, w === 'SLA' ? '' : 'i');
-      if (re.test(text)) problems.push(`${path}: banned word "${w}"`);
-    }
+    problems.push(...bannedWords(path, text));
     if (/mailto:/i.test(text)) problems.push(`${path}: literal mail link prefix`);
     if (text.toLowerCase().includes(email.toLowerCase())) problems.push(`${path}: the raw email address`);
     if (/&#(?:0*64|x0*40);|&commat;/i.test(text)) problems.push(`${path}: entity-encoded @`);
@@ -120,7 +142,14 @@ if (isCli) {
       .map((p) => [relative(dist, p).replace(/\\/g, '/'), readFileSync(p, 'utf8')]),
   );
   const problems = checkSite(files, { showCompanies, email: emailFromContent() });
+  // The CV gets the banned-word check only (it carries the address and the
+  // employers on purpose). Fail closed if it can't be read.
+  try {
+    problems.push(...bannedWords(CV_PATH, cvText(join(dist, CV_PATH))));
+  } catch (err) {
+    problems.push(`${CV_PATH}: could not read the CV text (${err.code === 'ENOENT' ? 'install poppler-utils' : 'pdftotext failed'})`);
+  }
   for (const p of problems) console.log(`FAIL ${p}`);
-  console.log(`content-check: ${files.size} text file(s), companies ${showCompanies ? 'on' : 'off'}, ${problems.length} problem(s)`);
+  console.log(`content-check: ${files.size} text file(s) + ${CV_PATH}, companies ${showCompanies ? 'on' : 'off'}, ${problems.length} problem(s)`);
   process.exit(problems.length ? 1 : 0);
 }

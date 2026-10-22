@@ -219,12 +219,14 @@ jobs:
   content:
     name: content
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 20
     steps:
       - uses: actions/checkout@v5
       - uses: actions/setup-node@v5
         with: { node-version: 20, cache: npm }
       - run: npm ci
+      - name: Install poppler (pdftotext for the CV's banned-word check)
+        run: sudo apt-get update -qq && sudo apt-get install -y -qq poppler-utils
       - name: Build with company names on (default)
         run: npm run build
         env:
