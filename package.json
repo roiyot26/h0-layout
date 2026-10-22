@@ -4,7 +4,7 @@
   "version": "0.0.0",
   "type": "module",
   "description": "A portfolio laid out as an H0 model railway.",
-  "license": "UNLICENSED",
+  "license": "MIT",
   "engines": {
     "node": ">=20"
   },
@@ -35,8 +35,8 @@
     "size-limit": "11.2.0",
     "typescript": "5.9.3",
     "typescript-eslint": "8.71.2",
-    "vite": "5.4.21",
-    "vitest": "3.2.7"
+    "vite": "6.4.4",
+    "vitest": "4.1.12"
   },
   "dependencies": {
     "three": "0.186.1"

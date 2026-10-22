@@ -57,6 +57,14 @@ Both are under the SIL Open Font License 1.1; the license files sit next to them
   then push main. The web merge button records GitHub as the committer, which the
   check rejects.
 
+## Known audit findings
+
+`npm audit` reports 3 high advisories in the braces and micromatch chain pulled in
+by the glTF Transform CLI (`@gltf-transform/cli`). The CLI is a dev dependency
+only: it runs in CI on this repo's own GLB files and never ships to the site. There
+is no fixed version yet, so we're waiting on an upstream fix. The owner accepted
+this as a dev-only risk.
+
 ## Test GLB
 
 `test/fixtures/cube.glb` is a 12-triangle cube with meshopt compression and a KTX2
@@ -65,5 +73,24 @@ must reference their textures. Rebuild it with `scripts/make-test-glb.mjs`.
 
 ## Gates
 
-Each milestone ends in four written gates (design, QA, hiring rules, owner
-approval). Records live in `docs/gates/` and name roles only.
+From M1 on, each milestone ends in five written gates, in this order: design, UX,
+QA, hiring rules, owner approval. Records live in `docs/gates/` as
+`M<n>-<gate>-<sha7>.md` and name roles only.
+
+## Licence
+
+The source code in this repository is under the MIT License (see `LICENSE`).
+
+The following are not covered by the MIT License. They are (c) 2026 Roi Yotvat,
+all rights reserved:
+
+- the site's written content and copy, including the content file
+  (`content.ts`) and everything in `cv/`, even though they sit next to the code;
+- the CV (`cv.pdf`);
+- all images, screenshots, 3D models, textures and renders, including
+  `docs/gates/*/shots/`;
+- Roi Yotvat's name, likeness and personal brand.
+
+The fonts in `public/fonts/` are under the SIL Open Font License 1.1 (see the
+license files next to them). The generated test fixtures in `test/fixtures/` are
+code and are under the MIT License.
