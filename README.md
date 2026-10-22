@@ -32,6 +32,20 @@ Both are under the SIL Open Font License 1.1; the license files sit next to them
 
 `SITE_BASE` sets the public path (default `/`). CI builds both `/h0-layout/` and `/`.
 
+### Browser and link checks (`e2e/`)
+
+They run on the built site and have their own package, so the root lockfile stays
+untouched. Build first with `SITE_BASE=/h0-layout/ npm run build`, then in `e2e/` run
+`npm ci` and `npx playwright install chromium`.
+
+| Command (in `e2e/`) | CI job | What it does |
+|---|---|---|
+| `npm run links` | `links` | Internal links, anchors and routes must resolve. An external 404, 410 or DNS failure fails; LinkedIn is never fetched and must match the pinned URL in `external-allowlist.json` |
+| `npm run guard` | `links` | No `mailto:`, email address (plain or entity-encoded) or phone number in shipped text files; PDFs are exempt |
+| `npm run facts` | `facts` | JS off, at 1440 and 390: each route's title, `h1` and facts, no overflow, and the fixed hiring facts in the first viewport |
+| `npm run axe` | `axe` | axe on every route at 1440 and 390 |
+| `npm run smoke` | `axe` | JS on, at 1440 and 390: no page or console errors, and the email assembles on click |
+
 ## History rules
 
 - Every commit is authored and committed with the account's GitHub noreply address.

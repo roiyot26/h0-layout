@@ -1,0 +1,6 @@
+{
+  "comment": "Hosts that block bots or rate-limit CI are never fetched. Each key covers the host and its subdomains, and every link to them must exactly equal one of the listed URLs.",
+  "pinned": {
+    "linkedin.com": ["https://www.linkedin.com/in/roi-yotvat-874ba9209/"]
+  }
+}

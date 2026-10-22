@@ -1,3 +1,4 @@
+/// <reference types="vitest/config" />
 import { defineConfig, type Plugin } from 'vite';
 import { siteBase } from './src/base';
 
@@ -17,5 +18,9 @@ export default defineConfig({
     outDir: process.env.OUT_DIR ?? 'dist',
     emptyOutDir: true,
     target: 'es2022',
+  },
+  test: {
+    // Playwright specs live under e2e/ and are run by the facts/axe CI jobs.
+    exclude: ['**/node_modules/**', '**/dist/**', 'e2e/**'],
   },
 });

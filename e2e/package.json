@@ -1,0 +1,19 @@
+{
+  "name": "h0-layout-e2e",
+  "private": true,
+  "type": "module",
+  "description": "Browser and link checks on the built site. Kept apart from the root package so the root lockfile is untouched.",
+  "license": "UNLICENSED",
+  "scripts": {
+    "links": "node link-check.mjs",
+    "facts": "playwright test --project=facts",
+    "axe": "playwright test --project=axe",
+    "guard": "node dist-guard.mjs",
+    "smoke": "playwright test --project=smoke"
+  },
+  "devDependencies": {
+    "@axe-core/playwright": "4.14.0",
+    "@playwright/test": "1.56.1",
+    "parse5": "8.0.0"
+  }
+}

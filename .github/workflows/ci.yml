@@ -133,3 +133,91 @@ jobs:
         run: |
           pdfinfo public/cv.pdf | grep -q 'Tagged: *yes'
 
+  links:
+    name: links
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with: { node-version: 20, cache: npm }
+      - run: npm ci
+      - name: Build
+        run: npm run build
+        env:
+          SITE_BASE: /h0-layout/
+      - name: Install e2e deps
+        working-directory: e2e
+        run: npm ci
+      - name: Link check
+        working-directory: e2e
+        run: npm run links
+        env:
+          SITE_BASE: /h0-layout/
+          DIST_DIR: ${{ github.workspace }}/dist
+      - name: No email, mailto or phone in dist
+        working-directory: e2e
+        run: npm run guard
+        env:
+          DIST_DIR: ${{ github.workspace }}/dist
+
+  facts:
+    name: facts
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with: { node-version: 20, cache: npm }
+      - run: npm ci
+      - name: Build
+        run: npm run build
+        env:
+          SITE_BASE: /h0-layout/
+      - name: Install e2e deps
+        working-directory: e2e
+        run: npm ci
+      - name: Install Chromium
+        working-directory: e2e
+        run: npx playwright install chromium --with-deps
+      - name: Facts routes (JS off, 1440 and 390)
+        working-directory: e2e
+        run: npm run facts
+        env:
+          CI: 'true'
+          SITE_BASE: /h0-layout/
+          DIST_DIR: ${{ github.workspace }}/dist
+          PORT: '4173'
+
+  axe:
+    name: axe
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with: { node-version: 20, cache: npm }
+      - run: npm ci
+      - name: Build
+        run: npm run build
+        env:
+          SITE_BASE: /h0-layout/
+      - name: Install e2e deps
+        working-directory: e2e
+        run: npm ci
+      - name: Install Chromium
+        working-directory: e2e
+        run: npx playwright install chromium --with-deps
+      - name: axe on every route
+        working-directory: e2e
+        run: npm run axe
+        env:
+          CI: 'true'
+          SITE_BASE: /h0-layout/
+          DIST_DIR: ${{ github.workspace }}/dist
+          PORT: '4173'
+      - name: Smoke (JS on, 1440 and 390)
+        working-directory: e2e
+        run: npm run smoke
+        env:
+          CI: 'true'
+          SITE_BASE: /h0-layout/
+          DIST_DIR: ${{ github.workspace }}/dist
+          PORT: '4173'
