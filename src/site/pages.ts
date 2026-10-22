@@ -101,10 +101,14 @@ function layout(c: Ctx, route: Route, body: string, opts: { head?: string; bodyC
   </head>
   <body class="${opts.bodyClass ?? 'page'}">
     <header class="topbar">
-      <a class="corner skip" href="${c.u('/timetable')}"${current('/timetable')}>Skip to the facts</a>
+      ${
+        route.path === '/timetable'
+          ? '<a class="corner skip" href="#main">Skip to content</a>'
+          : `<a class="corner skip" href="${c.u('/timetable')}">Skip to the facts</a>`
+      }
       <a class="corner" href="${c.base}"${current('/')}>Departures</a>
     </header>
-    <main id="main">
+    <main id="main" tabindex="-1">
 ${body}
     </main>
     <footer class="foot">

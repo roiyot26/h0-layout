@@ -90,12 +90,24 @@ for (const path of ['/', '/contact']) {
 }
 
 test('Skip to the facts is on every page and goes to /timetable', async ({ page }) => {
-  for (const route of pages) {
+  for (const route of pages.filter((r) => r.path !== '/timetable')) {
     await page.goto(route.path === '/' ? './' : route.path.replace(/^\//, ''));
     const skip = page.getByRole('link', { name: 'Skip to the facts' });
     await expect(skip, route.path).toBeVisible();
     expect(await skip.getAttribute('href')).toMatch(/\/timetable\/$/);
   }
+});
+
+// On /timetable itself Skip would only reload the page, so it skips to the content.
+test('on /timetable Skip to content moves focus to main', async ({ page }) => {
+  await page.goto('timetable');
+  const skip = page.locator('.topbar .skip');
+  await expect(skip).toHaveText('Skip to content');
+  expect(await skip.getAttribute('href')).toBe('#main');
+  await expect(page.locator('main#main')).toHaveAttribute('tabindex', '-1');
+  await page.keyboard.press('Tab');
+  await page.keyboard.press('Enter');
+  expect(await page.evaluate(() => document.activeElement?.id)).toBe('main');
 });
 
 // M1-10: the /timetable section anchors land clear of the sticky top bar.
