@@ -2,8 +2,9 @@
 // Build public/cv.pdf from cv/cv.html.
 // Needs: Google Chrome (or Chromium) on PATH, and a Python 3 with pypdf
 // (the script creates a throwaway venv under /tmp if needed).
-// Fonts: put Literata.ttf, Literata-Italic.ttf and Inter.ttf in cv/fonts/
-// (variable OFL fonts; on this box they are symlinked from the sand-box font tree).
+// Fonts: put the static OFL TTFs BarlowSemiCondensed-{Regular,Medium,SemiBold}.ttf
+// and IBMPlexMono-Medium.ttf in cv/fonts/ (static files embed as TrueType, not
+// Type 3; on this box they are symlinked from the sand-box font tree).
 import { spawnSync } from 'node:child_process';
 import { copyFileSync, cpSync, existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
@@ -15,7 +16,12 @@ const html = join(root, 'cv/cv.html');
 const out = join(root, 'public/cv.pdf');
 const fontsDir = join(root, 'cv/fonts');
 
-for (const f of ['Literata.ttf', 'Literata-Italic.ttf', 'Inter.ttf']) {
+for (const f of [
+  'BarlowSemiCondensed-Regular.ttf',
+  'BarlowSemiCondensed-Medium.ttf',
+  'BarlowSemiCondensed-SemiBold.ttf',
+  'IBMPlexMono-Medium.ttf',
+]) {
   if (!existsSync(join(fontsDir, f))) {
     console.error(`build-cv: missing cv/fonts/${f}`);
     process.exit(1);

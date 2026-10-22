@@ -3,7 +3,8 @@
 `public/cv.pdf` is the published CV. Rebuild it with:
 
 ```bash
-# Once per machine: OFL variable fonts as cv/fonts/{Literata,Literata-Italic,Inter}.ttf
+# Once per machine: static OFL fonts as cv/fonts/BarlowSemiCondensed-{Regular,Medium,SemiBold}.ttf
+# and cv/fonts/IBMPlexMono-Medium.ttf (the site's families; licences in public/fonts/).
 # On the portfolio box they are symlinked from the sand-box Google font tree.
 npm run build-cv
 npm run cv-check
