@@ -250,7 +250,7 @@ export const behindTheScenes = {
   ],
   who: [
     'I set the direction, wrote and approved the content, and approve every release.',
-    'AI agents did much of the engineering, design and review work, each in a set role: building, fixing, design review, UX review, QA and a hiring-rules review. Every change passes those reviews before it reaches me, and nothing goes live without my approval.',
+    'AI agents did much of the engineering, design and review work, each in a set role: building, fixing, QA, and design, UX and hiring-readiness reviews. Every change passes automated checks and QA, the design, UX and hiring-readiness reviews run at each milestone, and nothing goes live without my approval.',
   ],
   privacy:
     'No cookies, no analytics and no third-party requests. Nothing you do here leaves your browser.',
