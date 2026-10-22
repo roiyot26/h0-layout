@@ -182,7 +182,7 @@ export const kage = {
 export const nowParts: { title: string; body: Text }[] = [
   {
     title: 'Coding agents in the team.',
-    body: "I brought AI coding agents and custom AI tooling into the team's workflow, aiming for productivity and quality. The team's setup is simpler than Kage. Every project carries its own rules file for the agent. Machine checks run first on every change, and a developer reads what's left: whether it does what was asked, anything touching data or accounts, and any decisions made mid-build.",
+    body: "I brought AI coding agents, and custom tooling around them, into the team's workflow to raise output without lowering quality. The team's setup is simpler than Kage. Every project carries its own rules file for the agent. Machine checks run first on every change, and a developer reads what's left: whether it does what was asked, anything touching data or accounts, and any decisions made mid-build.",
   },
   {
     title: 'The course I built for the team.',
