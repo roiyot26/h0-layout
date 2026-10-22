@@ -9,7 +9,7 @@ real version lands.
 
 ## Stack
 
-Vite 5, TypeScript (strict) and vanilla three.js r186. No framework. Assets go
+Vite 6, TypeScript (strict) and vanilla three.js r186. No framework. Assets go
 through gltf-transform (meshopt, quantisation, KTX2).
 
 ## Fonts
