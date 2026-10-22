@@ -57,11 +57,23 @@ for (const route of pages) {
   }
 }
 
-// Font swap (M1-06): with the web fonts held back 3 s, the page lays out in the
-// metric-matched local fallbacks and swapping the real fonts in barely moves it.
+// Fonts (M1-06, CLS 0): with the woff2 files held back 3 s, the page lays out in the
+// metric-matched fallbacks and nothing moves when the fonts arrive (they're
+// font-display: optional, so a late font is kept for the next view, not swapped in).
+const platformFont = async (page: import('@playwright/test').Page, selector: string) => {
+  const cdp = await page.context().newCDPSession(page);
+  await cdp.send('DOM.enable');
+  await cdp.send('CSS.enable');
+  const { root } = await cdp.send('DOM.getDocument');
+  const { nodeId } = await cdp.send('DOM.querySelector', { nodeId: root.nodeId, selector });
+  const { fonts } = await cdp.send('CSS.getPlatformFontsForNode', { nodeId });
+  // Only the downloaded faces count, not a copy that happens to be installed locally.
+  return fonts.filter((f) => f.isCustomFont).map((f) => f.familyName).join(', ');
+};
+
 for (const width of [390, 360]) {
   for (const path of ['/', '/now/kage-diagram']) {
-    test(`font swap: ${path} @ ${width} has no layout shift`, async ({ page }) => {
+    test(`fonts held back 3 s: ${path} @ ${width} has CLS 0`, async ({ page }) => {
       await page.setViewportSize({ width, height: 780 });
       await page.addInitScript(() => {
         (window as unknown as { cls: number }).cls = 0;
@@ -71,15 +83,41 @@ for (const width of [390, 360]) {
           }
         }).observe({ type: 'layout-shift', buffered: true });
       });
+      let pending = 0;
       await page.route('**/*.woff2', async (r) => {
+        pending++;
         await new Promise((done) => setTimeout(done, 3000));
         await r.continue();
+        pending--;
       });
       await page.goto(path === '/' ? './' : path.replace(/^\//, '') + '/', { waitUntil: 'domcontentloaded' });
-      await page.waitForFunction(() => document.fonts.status === 'loaded' && [...document.fonts].some((f) => f.family === 'Barlow Semi Condensed' && f.status === 'loaded'));
-      await page.waitForTimeout(500);
+      await page.waitForTimeout(3000);
+      await expect.poll(() => pending).toBe(0);
+      await page.waitForTimeout(1000);
       const cls = await page.evaluate(() => (window as unknown as { cls: number }).cls);
-      expect(cls).toBeLessThan(0.005);
+      expect(cls).toBe(0);
     });
   }
 }
+
+// ...and when the fonts arrive in time they are the ones used.
+test('the web fonts are used when they load in time', async ({ page }) => {
+  await page.goto('./');
+  await page.evaluate(() => document.fonts.ready);
+  expect(await platformFont(page, '.facts h1')).toContain('Barlow Semi Condensed');
+  expect(await platformFont(page, '.board td.c-rem')).toContain('IBM Plex Mono');
+});
+
+// M1-03: with JS on too, the first Tab stop on every route is Skip.
+test('the first Tab focuses Skip on every route (JS on)', async ({ page }) => {
+  for (const route of pages) {
+    await page.goto(route.path === '/' ? './' : route.path.replace(/^\//, '') + '/');
+    await page.keyboard.press('Tab');
+    const focused = await page.evaluate(() => {
+      const el = document.activeElement as HTMLElement | null;
+      return { cls: el?.className ?? '', text: el?.textContent?.trim() ?? '' };
+    });
+    expect(focused.cls, route.path).toBe('corner skip');
+    expect(focused.text, route.path).toBe(route.path === '/timetable' ? 'Skip to content' : 'Skip to the facts');
+  }
+});

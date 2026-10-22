@@ -1,7 +1,14 @@
-@font-face{font-family:'IBM Plex Mono';src:url(/fonts/plex-mono-500-sub.woff2) format('woff2');font-weight:500;font-style:normal;font-display:swap}
-@font-face{font-family:'Barlow Semi Condensed';src:url(/fonts/barlow-sc-600-sub.woff2) format('woff2');font-weight:600;font-style:normal;font-display:swap}
-@font-face{font-family:'Barlow Semi Condensed';src:url(/fonts/barlow-sc-500-sub.woff2) format('woff2');font-weight:500;font-style:normal;font-display:swap}
-/* Metric-matched fallbacks, so swapping in the web fonts moves nothing (M1-06).
+@font-face{font-family:'Plex Mono Web';src:url(/fonts/plex-mono-500-sub.woff2) format('woff2');font-weight:500;font-style:normal;font-display:optional}
+@font-face{font-family:'Barlow SC Web';src:url(/fonts/barlow-sc-600-sub.woff2) format('woff2');font-weight:600;font-style:normal;font-display:optional}
+@font-face{font-family:'Barlow SC Web';src:url(/fonts/barlow-sc-500-sub.woff2) format('woff2');font-weight:500;font-style:normal;font-display:optional}
+/* No layout shift from fonts (M1-06, CLS 0): the three faces above are preloaded and
+   use font-display: optional, so a page either paints in them from the start or keeps
+   the fallback for that view and never swaps. They have their own family names so a
+   copy of Barlow or Plex installed on the reader's machine can't take their place
+   once the file arrives. With swap, the fallbacks below got the shift down to about
+   0.01 but not to 0: Chrome rounds the adjusted fallback sizes
+   to whole pixels, so a few labels and line breaks still moved by a pixel or two.
+   The fallbacks stay metric-matched, so a view that keeps them looks the same.
    Barlow SC vs Arial (Liberation Sans is metric-identical): size-adjust is the
    ratio of the site's text widths, from fontTools; ascent/descent are Barlow's
    1000/200 per 1000 em divided by it. Barlow's capitals are narrower against
@@ -25,8 +32,8 @@
   --ink: #1c1d1f;
   --muted: #5a5852;
   --enamel: #1f3a5f;
-  --sans: 'Barlow Semi Condensed', 'Barlow SC Fallback', system-ui, sans-serif;
-  --mono: 'IBM Plex Mono', 'Plex Mono Fallback', ui-monospace, monospace;
+  --sans: 'Barlow SC Web', 'Barlow SC Fallback', system-ui, sans-serif;
+  --mono: 'Plex Mono Web', 'Plex Mono Fallback', ui-monospace, monospace;
   color-scheme: dark;
 }
 * { box-sizing: border-box; }
@@ -216,7 +223,7 @@ blockquote { margin: 8px 0; padding-left: 14px; border-left: 3px solid var(--ena
 .paper .corner, .paper .foot a { color: var(--enamel); border-color: var(--enamel); background: var(--paper); }
 .paper .corner[aria-current='page'] { border-color: var(--ink); }
 .kage-top { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; margin-bottom: 12px; }
-.kage-top h1 { font: 600 15px/1.2 'Barlow Semi Condensed', 'Barlow SC Caps Fallback', system-ui, sans-serif; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); margin: 0; }
+.kage-top h1 { font: 600 15px/1.2 'Barlow SC Web', 'Barlow SC Caps Fallback', system-ui, sans-serif; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); margin: 0; }
 /* Inline SVG arrows (see arrow() in pages.ts), sized and spaced like the characters
    they replace. */
 .arrow { display: inline-block; width: 1em; height: 1em; flex: none; vertical-align: -0.125em; }
