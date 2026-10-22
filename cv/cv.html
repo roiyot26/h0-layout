@@ -81,8 +81,9 @@ h2 {
 }
 .role { font-weight: 600 }
 .where { font-weight: 400 }
-.row ul { margin: 1.2mm 0 0 3.6mm }
-.row li { margin-bottom: 0.8mm }
+.row ul { margin: 1.2mm 0 0; list-style: none }
+.row li { margin-bottom: 0.8mm; padding-left: 3.6mm; text-indent: -3.6mm }
+.row li::before { content: "\2022\a0\a0" }
 dl.skills {
   display: grid;
   grid-template-columns: 30mm 1fr;
