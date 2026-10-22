@@ -94,6 +94,8 @@ function layout(c: Ctx, route: Route, body: string, opts: { head?: string; bodyC
     <meta name="theme-color" content="#16181A" />
     <link rel="icon" href="data:," />
     <link rel="preload" href="${c.base}fonts/plex-mono-500-sub.woff2" as="font" type="font/woff2" crossorigin />
+    <link rel="preload" href="${c.base}fonts/barlow-sc-500-sub.woff2" as="font" type="font/woff2" crossorigin />
+    <link rel="preload" href="${c.base}fonts/barlow-sc-600-sub.woff2" as="font" type="font/woff2" crossorigin />
     ${css}${opts.head ? `\n    ${opts.head}` : ''}
     ${js}
   </head>

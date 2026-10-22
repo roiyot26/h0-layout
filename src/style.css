@@ -1,6 +1,17 @@
 @font-face{font-family:'IBM Plex Mono';src:url(/fonts/plex-mono-500-sub.woff2) format('woff2');font-weight:500;font-style:normal;font-display:swap}
 @font-face{font-family:'Barlow Semi Condensed';src:url(/fonts/barlow-sc-600-sub.woff2) format('woff2');font-weight:600;font-style:normal;font-display:swap}
 @font-face{font-family:'Barlow Semi Condensed';src:url(/fonts/barlow-sc-500-sub.woff2) format('woff2');font-weight:500;font-style:normal;font-display:swap}
+/* Metric-matched fallbacks, so swapping in the web fonts moves nothing (M1-06).
+   Barlow SC vs Arial (Liberation Sans is metric-identical): size-adjust is the
+   ratio of the site's text widths, from fontTools; ascent/descent are Barlow's
+   1000/200 per 1000 em divided by it. Barlow's capitals are narrower against
+   Arial's than its lower case, so the one all-caps label has its own face.
+   Plex Mono vs Courier New: same 0.6 em advance, ascent/descent from Plex's
+   hhea 1025/275. */
+@font-face{font-family:'Barlow SC Fallback';src:local('Arial'),local('ArialMT'),local('Liberation Sans'),local('Arimo Regular');font-weight:500;size-adjust:87.15%;ascent-override:114.74%;descent-override:22.95%;line-gap-override:0%}
+@font-face{font-family:'Barlow SC Fallback';src:local('Arial Bold'),local('Arial-BoldMT'),local('Liberation Sans Bold');font-weight:600;size-adjust:82.44%;ascent-override:121.3%;descent-override:24.26%;line-gap-override:0%}
+@font-face{font-family:'Barlow SC Caps Fallback';src:local('Arial Bold'),local('Arial-BoldMT'),local('Liberation Sans Bold');font-weight:600;size-adjust:75.56%;ascent-override:132.35%;descent-override:26.47%;line-gap-override:0%}
+@font-face{font-family:'Plex Mono Fallback';src:local('Courier New'),local('CourierNewPSMT'),local('Cousine'),local('Liberation Mono');font-weight:500;size-adjust:100%;ascent-override:102.5%;descent-override:27.5%;line-gap-override:0%}
 
 /* Palette and board geometry: style guide §2 and §6. */
 :root {
@@ -14,8 +25,8 @@
   --ink: #1c1d1f;
   --muted: #5a5852;
   --enamel: #1f3a5f;
-  --sans: 'Barlow Semi Condensed', system-ui, sans-serif;
-  --mono: 'IBM Plex Mono', ui-monospace, monospace;
+  --sans: 'Barlow Semi Condensed', 'Barlow SC Fallback', system-ui, sans-serif;
+  --mono: 'IBM Plex Mono', 'Plex Mono Fallback', ui-monospace, monospace;
   color-scheme: dark;
 }
 * { box-sizing: border-box; }
@@ -195,7 +206,7 @@ blockquote { margin: 8px 0; padding-left: 14px; border-left: 3px solid var(--ena
 .paper .corner, .paper .foot a { color: var(--enamel); border-color: var(--enamel); background: var(--paper); }
 .paper .corner[aria-current='page'] { border-color: var(--ink); }
 .kage-top { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; margin-bottom: 12px; }
-.kage-top h1 { font: 600 15px/1.2 var(--sans); letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); margin: 0; }
+.kage-top h1 { font: 600 15px/1.2 'Barlow Semi Condensed', 'Barlow SC Caps Fallback', system-ui, sans-serif; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); margin: 0; }
 .back {
   display: inline-flex; align-items: center; min-height: 44px; padding: 0 12px;
   font: 600 15px/1 var(--sans); color: var(--enamel); background: var(--paper);

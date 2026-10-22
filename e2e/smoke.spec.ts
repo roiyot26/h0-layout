@@ -45,3 +45,30 @@ for (const route of pages) {
     });
   }
 }
+
+// Font swap (M1-06): with the web fonts held back 3 s, the page lays out in the
+// metric-matched local fallbacks and swapping the real fonts in barely moves it.
+for (const width of [390, 360]) {
+  for (const path of ['/', '/now/kage-diagram']) {
+    test(`font swap: ${path} @ ${width} has no layout shift`, async ({ page }) => {
+      await page.setViewportSize({ width, height: 780 });
+      await page.addInitScript(() => {
+        (window as unknown as { cls: number }).cls = 0;
+        new PerformanceObserver((list) => {
+          for (const e of list.getEntries() as unknown as { value: number; hadRecentInput: boolean }[]) {
+            if (!e.hadRecentInput) (window as unknown as { cls: number }).cls += e.value;
+          }
+        }).observe({ type: 'layout-shift', buffered: true });
+      });
+      await page.route('**/*.woff2', async (r) => {
+        await new Promise((done) => setTimeout(done, 3000));
+        await r.continue();
+      });
+      await page.goto(path === '/' ? './' : path.replace(/^\//, '') + '/', { waitUntil: 'domcontentloaded' });
+      await page.waitForFunction(() => document.fonts.status === 'loaded' && [...document.fonts].some((f) => f.family === 'Barlow Semi Condensed' && f.status === 'loaded'));
+      await page.waitForTimeout(500);
+      const cls = await page.evaluate(() => (window as unknown as { cls: number }).cls);
+      expect(cls).toBeLessThan(0.005);
+    });
+  }
+}
