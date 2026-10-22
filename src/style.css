@@ -172,6 +172,9 @@ main > h1 { font-size: clamp(30px, 5vw, 42px); margin: 8px 0 16px; }
 .st-now { --accent: #e3b341; }
 .st-workshop { --accent: #b0582a; }
 .crumb { margin: 0; font-weight: 600; }
+/* Tap targets of at least 44px (M1-08): the bench crumb, the /timetable bench
+   links and Source on GitHub. */
+.crumb a, .st-workshop .part h3 a, .src a { display: inline-flex; align-items: center; min-height: 44px; }
 .small { font-size: 15px; color: var(--muted); }
 .more { font-weight: 600; display: inline-flex; align-items: center; min-height: 44px; }
 blockquote { margin: 8px 0; padding-left: 14px; border-left: 3px solid var(--enamel); }

@@ -121,6 +121,21 @@ for (const id of ['tt-now', 'tt-workshop']) {
   });
 }
 
+// M1-08: these links were 20-25 px tall; each is now a 44 px target.
+for (const [path, selector, count] of [
+  ['workshop/blender', '.crumb a', 1],
+  ['timetable', '.st-workshop .part h3 a', 4],
+  ['behind-the-scenes', '.src a', 1],
+] as const) {
+  test(`${selector} on /${path} is at least 44 px tall`, async ({ page }) => {
+    await page.setViewportSize({ width: 390, height: 844 });
+    await page.goto(path);
+    const links = page.locator(selector);
+    await expect(links).toHaveCount(count);
+    for (const a of await links.all()) expect((await a.boundingBox())!.height).toBeGreaterThanOrEqual(44);
+  });
+}
+
 // M1-03: Skip is the first Tab stop on every page, and sits left of Departures.
 test('the first Tab focuses Skip on every page', async ({ page }) => {
   for (const route of pages) {

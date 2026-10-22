@@ -349,7 +349,7 @@ function behind(c: Ctx): string {
   <p>${esc(b.privacy)}</p>
   <h2>Credits</h2>
   ${b.credits.map((x) => `<p>${esc(x)}</p>`).join('\n  ')}
-  <p>${external('https://github.com/roiyot26/h0-layout', 'Source on GitHub')}</p>
+  <p class="src">${external('https://github.com/roiyot26/h0-layout', 'Source on GitHub')}</p>
 </article>`;
   return layout(c, r, body);
 }
