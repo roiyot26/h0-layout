@@ -87,5 +87,24 @@ must reference their textures. Rebuild it with `scripts/make-test-glb.mjs`.
 
 ## Gates
 
-Each milestone ends in four written gates (design, QA, hiring rules, owner
-approval). Records live in `docs/gates/` and name roles only.
+From M1 on, each milestone ends in five written gates, in this order: design, UX,
+QA, hiring rules, owner approval. Records live in `docs/gates/` as
+`M<n>-<gate>-<sha7>.md` and name roles only.
+
+## Licence
+
+The source code in this repository is under the MIT License (see `LICENSE`).
+
+The following are not covered by the MIT License. They are (c) 2026 Roi Yotvat,
+all rights reserved:
+
+- the site's written content and copy, including the content file
+  (`content.ts`) and everything in `cv/`, even though they sit next to the code;
+- the CV (`cv.pdf`);
+- all images, screenshots, 3D models, textures and renders, including
+  `docs/gates/*/shots/`;
+- Roi Yotvat's name, likeness and personal brand.
+
+The fonts in `public/fonts/` are under the SIL Open Font License 1.1 (see the
+license files next to them). The generated test fixtures in `test/fixtures/` are
+code and are under the MIT License.
