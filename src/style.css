@@ -30,7 +30,7 @@
   color-scheme: dark;
 }
 * { box-sizing: border-box; }
-html { -webkit-text-size-adjust: 100%; scroll-padding-top: 76px; }
+html { -webkit-text-size-adjust: 100%; scroll-padding-top: 76px; scroll-padding-bottom: 16px; }
 body {
   margin: 0;
   min-height: 100vh;

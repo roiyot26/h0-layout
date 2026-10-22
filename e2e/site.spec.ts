@@ -98,6 +98,17 @@ test('Skip to the facts is on every page and goes to /timetable', async ({ page 
   }
 });
 
+// M1-10: the /timetable section anchors land clear of the sticky top bar.
+for (const id of ['tt-now', 'tt-workshop']) {
+  test(`/timetable#${id} lands below the top bar`, async ({ page }) => {
+    await page.setViewportSize({ width: 390, height: 844 });
+    await page.goto(`timetable/#${id}`);
+    const bar = await page.locator('.topbar').boundingBox();
+    const target = await page.locator(`#${id}`).boundingBox();
+    expect(target!.y).toBeGreaterThanOrEqual(bar!.y + bar!.height);
+  });
+}
+
 // M1-03: Skip is the first Tab stop on every page, and sits left of Departures.
 test('the first Tab focuses Skip on every page', async ({ page }) => {
   for (const route of pages) {
