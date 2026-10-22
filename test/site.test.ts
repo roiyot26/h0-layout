@@ -274,3 +274,11 @@ describe('no internal course', () => {
     });
   }
 });
+
+describe('Kage diagram', () => {
+  it('has no empty text nodes in either SVG', () => {
+    for (const [path, html] of renderSite(opts({ showCompanies: true }))) {
+      expect(html, path).not.toMatch(/<text[^>]*><\/text>/);
+    }
+  });
+});
