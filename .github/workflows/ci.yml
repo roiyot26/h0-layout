@@ -205,3 +205,19 @@ jobs:
           SITE_BASE: /h0-layout/
           DIST_DIR: ${{ github.workspace }}/dist
           PORT: '4173'
+
+  cv:
+    name: cv
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with: { node-version: 20, cache: npm }
+      - run: npm ci
+      - name: Install poppler (pdfinfo, pdftotext)
+        run: sudo apt-get update -qq && sudo apt-get install -y -qq poppler-utils
+      - name: Verify public/cv.pdf
+        run: npm run cv-check
+      - name: public/cv.pdf is tagged
+        run: |
+          pdfinfo public/cv.pdf | grep -q 'Tagged: *yes'

@@ -18,7 +18,9 @@
     "size": "size-limit",
     "budget": "node scripts/budget.mjs",
     "history-check": "node scripts/history-check.mjs --all",
-    "glb-check": "node scripts/glb-check.mjs test/fixtures/cube.glb"
+    "glb-check": "node scripts/glb-check.mjs test/fixtures/cube.glb",
+    "build-cv": "node scripts/build-cv.mjs",
+    "cv-check": "node scripts/verify-cv.mjs"
   },
   "devDependencies": {
     "@eslint/js": "9.39.5",

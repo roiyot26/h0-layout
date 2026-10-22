@@ -1,0 +1,20 @@
+[
+  {
+    "years": "2026 – now",
+    "role": "Full-stack developer",
+    "employer": "Moveo Creative",
+    "summary": "Lead developer on full-stack projects for enterprise clients: custom WordPress and React / Next.js sites, end to end. Brought LLM coding agents and custom AI tooling (including a hybrid-search RAG assistant over MCP) into the team, and teaches an internal web development course."
+  },
+  {
+    "years": "2022 – 2026",
+    "role": "Full-stack developer and coding instructor",
+    "employer": "Mister Bit",
+    "summary": "Built and maintained client web apps with React, Node.js / Express and MongoDB. Taught multiple full-stack course cycles of 60–70 students each at Coding Academy."
+  },
+  {
+    "years": "2021 – 2022",
+    "role": "Full-stack developer bootcamp",
+    "employer": "Coding Academy",
+    "summary": "Intensive four-month program of self-led learning and team projects: HTML, CSS, JavaScript, React, Node.js, Express, MongoDB."
+  }
+]
