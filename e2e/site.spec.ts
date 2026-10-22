@@ -97,3 +97,30 @@ test('Skip to the facts is on every page and goes to /timetable', async ({ page 
     expect(await skip.getAttribute('href')).toMatch(/\/timetable\/$/);
   }
 });
+
+// Design ruling 1 (WCAG 2.4.11): walking back up /timetable with Shift+Tab, no focused
+// link may sit under the sticky top bar.
+for (const vp of [
+  { width: 1440, height: 900 },
+  { width: 390, height: 844 },
+]) {
+  test(`Shift+Tab on /timetable @ ${vp.width} never hides focus under the top bar`, async ({ page }) => {
+    await page.setViewportSize(vp);
+    await page.goto('timetable');
+    const hidden: string[] = [];
+    for (let i = 0; i < 200; i++) {
+      await page.keyboard.press('Shift+Tab');
+      const r = await page.evaluate(() => {
+        const el = document.activeElement as HTMLElement | null;
+        const bar = document.querySelector('.topbar')!;
+        if (!el || el === document.body) return { done: true, inBar: false, covered: false, name: '' };
+        const a = el.getBoundingClientRect();
+        const b = bar.getBoundingClientRect();
+        return { done: false, inBar: bar.contains(el), covered: a.top < b.bottom - 0.5, name: (el.textContent ?? '').trim().slice(0, 40) };
+      });
+      if (r.done || r.inBar) break;
+      if (r.covered) hidden.push(r.name);
+    }
+    expect(hidden, `focused under the bar: ${hidden.join(' | ')}`).toEqual([]);
+  });
+}

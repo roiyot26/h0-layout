@@ -19,7 +19,7 @@
   color-scheme: dark;
 }
 * { box-sizing: border-box; }
-html { -webkit-text-size-adjust: 100%; }
+html { -webkit-text-size-adjust: 100%; scroll-padding-top: 76px; }
 body {
   margin: 0;
   min-height: 100vh;
@@ -182,7 +182,7 @@ blockquote { margin: 8px 0; padding-left: 14px; border-left: 3px solid var(--ena
   background-image: linear-gradient(#e4dccb 1px, transparent 1px), linear-gradient(90deg, #e4dccb 1px, transparent 1px);
   background-size: 20px 20px; color-scheme: light;
 }
-.paper .topbar { background: transparent; }
+.paper .topbar { background: var(--paper); }
 .paper .corner, .paper .foot a { color: var(--enamel); border-color: var(--enamel); background: var(--paper); }
 .paper .corner[aria-current='page'] { border-color: var(--ink); }
 .kage-top { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; margin-bottom: 12px; }
