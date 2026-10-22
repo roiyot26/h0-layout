@@ -83,6 +83,7 @@ for (const path of ['/', '/contact']) {
     await page.goto(path === '/' ? './' : path.replace(/^\//, ''));
     const a = page.locator('a[data-u]').first();
     await expect(a).toHaveText(/^\S+ \[at\] \S+ \[dot\] \S+$/);
+    await expect(a).toHaveAttribute('aria-label', 'Email');
     expect(await a.getAttribute('href')).not.toMatch(/^mailto:/i);
     expect(await page.locator('a[href^="mailto:" i]').count()).toBe(0);
   });

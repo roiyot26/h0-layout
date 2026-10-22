@@ -50,9 +50,10 @@ const external = (url: string, label: string, extra = '') =>
 function emailLink(c: Ctx, cls = 'email'): string {
   // Static HTML carries the parts reversed. With JS off the visible text reads
   // "name [at] domain [dot] tld" (the name is shown reversed back by CSS); the page
-  // script rebuilds the real address on focus, pointerdown or click.
+  // script rebuilds the real address on focus, pointerdown or click. Until then the
+  // link's accessible name is "Email", so screen readers don't read the reversed parts.
   return (
-    `<a class="${cls}" href="${c.u('/contact')}" data-u="${email.user}" data-d="${email.domain}" data-t="${email.tld}">` +
+    `<a class="${cls}" href="${c.u('/contact')}" aria-label="Email" data-u="${email.user}" data-d="${email.domain}" data-t="${email.tld}">` +
     `<span class="rev">${email.user}</span> [at] ${[...email.domain].reverse().join('')} [dot] ${[...email.tld].reverse().join('')}</a>`
   );
 }

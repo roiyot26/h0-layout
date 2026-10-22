@@ -182,9 +182,15 @@ describe('email', () => {
     }
   });
 
+  it('names every static email link "Email" for screen readers', () => {
+    for (const [path, html] of renderSite(opts())) {
+      for (const [a] of html.matchAll(/<a [^>]*data-u="[^>]*>/g)) expect(a, path).toContain(' aria-label="Email" ');
+    }
+  });
+
   it('falls back to "name [at] domain [dot] tld" with JS off', () => {
     const home = renderSite(opts()).get('index.html')!;
-    expect(home).toMatch(/<a class="email" href="\/h0-layout\/contact\/" data-u="[^"]+" data-d="[^"]+" data-t="[^"]+"><span class="rev">[^<]+<\/span> \[at\] \w+ \[dot\] \w+<\/a>/);
+    expect(home).toMatch(/<a class="email" href="\/h0-layout\/contact\/" aria-label="Email" data-u="[^"]+" data-d="[^"]+" data-t="[^"]+"><span class="rev">[^<]+<\/span> \[at\] \w+ \[dot\] \w+<\/a>/);
   });
 });
 

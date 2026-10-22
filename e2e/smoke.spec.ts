@@ -32,10 +32,12 @@ for (const route of pages) {
         await expect(email.first(), 'obfuscated email link not visible').toBeVisible();
         // Hold the element itself: its text changes once the address is assembled.
         const link = (await email.first().elementHandle())!;
+        expect(await link.getAttribute('aria-label'), 'static email link has no "Email" label').toBe('Email');
         await link.focus();
         await link.click();
         expect(await link.getAttribute('href')).toMatch(/^mailto:[^@\s]+@[^@\s]+\.[a-z]{2,}$/);
         expect(await link.textContent()).toMatch(/^[^@\s]+@[^@\s]+\.[a-z]{2,}$/);
+        expect(await link.getAttribute('aria-label'), 'aria-label left on the written address').toBeNull();
       }
 
       expect(errors, errors.join('\n')).toEqual([]);
