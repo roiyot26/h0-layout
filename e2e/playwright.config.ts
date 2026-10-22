@@ -29,7 +29,7 @@ export default defineConfig({
   projects: [
     {
       name: 'facts',
-      testMatch: /(facts|hiring|hiring-plants)\.spec\.ts/,
+      testMatch: /(facts|hiring|hiring-plants|site)\.spec\.ts/,
       use: { javaScriptEnabled: false, browserName: 'chromium' },
     },
     {

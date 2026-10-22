@@ -14,6 +14,9 @@ const here = dirname(fileURLToPath(import.meta.url));
 const dist = resolve(process.env.DIST_DIR ?? join(here, '../dist'));
 const siteBase = process.env.SITE_BASE ?? '/h0-layout/';
 const baseNoSlash = siteBase.replace(/\/$/, '') || '';
+// Canonical URLs point at the deployed site, which may not have this build yet; links
+// under the site's own origin and base are checked against dist instead of fetched.
+const siteOrigin = (process.env.SITE_ORIGIN ?? 'https://roiyot26.github.io').replace(/\/$/, '');
 const pinned = JSON.parse(
   await readFile(new URL('./external-allowlist.json', import.meta.url), 'utf8'),
 ).pinned;
@@ -95,6 +98,9 @@ function classify(fromFile, raw) {
   if (/^[a-z][a-z0-9+.-]*:/i.test(raw)) {
     try {
       const u = new URL(raw);
+      if (u.origin === siteOrigin && (u.pathname === baseNoSlash || u.pathname.startsWith(siteBase))) {
+        return { kind: 'internal', path: u.pathname, hash: u.hash ? decodeURIComponent(u.hash.slice(1)) : '', own: { host: u.host, href: u.href } };
+      }
       return { kind: 'external', host: u.host, href: u.href };
     } catch {
       return { kind: 'bad' };
@@ -160,14 +166,17 @@ for (const file of files.filter((f) => f.endsWith('.css'))) {
   }
 }
 
-// Every declared route must have a built page.
+// Every declared route must have a built page (or, for a download such as /cv.pdf,
+// a built file).
 for (const r of routes) {
   const path =
     r.path === '/'
       ? siteBase
-      : `${baseNoSlash}${r.path.endsWith('/') ? r.path : `${r.path}/`}`;
+      : r.file
+        ? `${baseNoSlash}${r.path}`
+        : `${baseNoSlash}${r.path.endsWith('/') ? r.path : `${r.path}/`}`;
   if (!(await fileForPath(path))) {
-    log(failures, `FAIL route ${r.path}: no built page at ${path}`);
+    log(failures, `FAIL route ${r.path}: no built ${r.file ? 'file' : 'page'} at ${path}`);
   }
 }
 
@@ -187,14 +196,20 @@ for (const ref of refs) {
   }
   if (c.kind === 'internal') {
     const target = await fileForPath(c.path);
-    if (!target) {
-      log(failures, `FAIL ${ref.file}: broken ${ref.via} → ${ref.raw}`);
+    // At SITE_BASE=/ the site shares its origin with other sites on it: a URL there
+    // that isn't in dist is someone else's page, so it's fetched like any external.
+    if (!target && c.own && siteBase === '/') {
+      Object.assign(c, { kind: 'external', ...c.own });
+    } else {
+      if (!target) {
+        log(failures, `FAIL ${ref.file}: broken ${ref.via} → ${ref.raw}`);
+        continue;
+      }
+      if (c.hash && !(await idsIn(target)).has(c.hash)) {
+        log(failures, `FAIL ${ref.file}: missing #${c.hash} in ${relative(dist, target)} (${ref.via})`);
+      }
       continue;
     }
-    if (c.hash && !(await idsIn(target)).has(c.hash)) {
-      log(failures, `FAIL ${ref.file}: missing #${c.hash} in ${relative(dist, target)} (${ref.via})`);
-    }
-    continue;
   }
   if (c.kind === 'external') {
     const pin = pinnedHost(c.host);

@@ -15,6 +15,7 @@ concurrency:
 jobs:
   lint:
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@v5
       - uses: actions/setup-node@v5
@@ -24,6 +25,7 @@ jobs:
 
   test:
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     steps:
       - uses: actions/checkout@v5
       - uses: actions/setup-node@v5
@@ -35,6 +37,7 @@ jobs:
 
   build:
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     strategy:
       matrix:
         site_base: ['/h0-layout/', '/']
@@ -55,6 +58,7 @@ jobs:
 
   budget:
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@v5
       - uses: actions/setup-node@v5
@@ -70,6 +74,7 @@ jobs:
 
   history:
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     steps:
       # Check out the PR head itself, not the merge ref GitHub builds for the run,
       # so only commits that will really be in the history are checked.
@@ -88,6 +93,7 @@ jobs:
 
   gitleaks:
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     env:
       GITLEAKS_VERSION: 8.30.1
     steps:
@@ -107,6 +113,7 @@ jobs:
 
   glb:
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@v5
       - uses: actions/setup-node@v5
@@ -117,25 +124,10 @@ jobs:
       - name: meshopt, KTX2 and caps
         run: npm run glb-check
 
-  cv:
-    name: cv
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v5
-      - uses: actions/setup-node@v5
-        with: { node-version: 20, cache: npm }
-      - run: npm ci
-      - name: Install poppler (pdfinfo, pdftotext)
-        run: sudo apt-get update -qq && sudo apt-get install -y -qq poppler-utils
-      - name: Verify public/cv.pdf
-        run: npm run cv-check
-      - name: public/cv.pdf is tagged
-        run: |
-          pdfinfo public/cv.pdf | grep -q 'Tagged: *yes'
-
   links:
     name: links
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@v5
       - uses: actions/setup-node@v5
@@ -163,6 +155,7 @@ jobs:
   facts:
     name: facts
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     steps:
       - uses: actions/checkout@v5
       - uses: actions/setup-node@v5
@@ -190,6 +183,7 @@ jobs:
   axe:
     name: axe
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     steps:
       - uses: actions/checkout@v5
       - uses: actions/setup-node@v5
@@ -221,3 +215,46 @@ jobs:
           SITE_BASE: /h0-layout/
           DIST_DIR: ${{ github.workspace }}/dist
           PORT: '4173'
+
+  content:
+    name: content
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with: { node-version: 20, cache: npm }
+      - run: npm ci
+      - name: Install poppler (pdftotext for the CV's banned-word check)
+        run: sudo apt-get update -qq && sudo apt-get install -y -qq poppler-utils
+      - name: Build with company names on (default)
+        run: npm run build
+        env:
+          SITE_BASE: /h0-layout/
+      - name: Content checks, companies on
+        run: node scripts/content-check.mjs dist --companies on
+      - name: Build with company names off
+        run: npx vite build
+        env:
+          SITE_BASE: /h0-layout/
+          SHOW_COMPANIES: '0'
+          OUT_DIR: dist-off
+      - name: Content checks, companies off
+        run: node scripts/content-check.mjs dist-off --companies off
+
+  cv:
+    name: cv
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with: { node-version: 20, cache: npm }
+      - run: npm ci
+      - name: Install poppler (pdfinfo, pdftotext)
+        run: sudo apt-get update -qq && sudo apt-get install -y -qq poppler-utils
+      - name: Verify public/cv.pdf
+        run: npm run cv-check
+      - name: public/cv.pdf is tagged
+        run: |
+          pdfinfo public/cv.pdf | grep -q 'Tagged: *yes'

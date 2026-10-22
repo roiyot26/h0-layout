@@ -8,6 +8,8 @@ Gate order per milestone: design reviewer → UX reviewer → QA → hiring-rule
 Record name: docs/gates/M<n>-ux-<sha7>.md
 ```
 
+While milestone work runs in lean mode (see `README.md` in this folder), this checklist is applied once per milestone, at the checkpoint review, not per PR.
+
 This is the set of measurable criteria I'll gate each milestone against, plus the spec flags I found while reading. I haven't gated anything yet. Where a spec gives a value, I quote it with its section. Where a spec says nothing, the value is **my proposal** (marked **P**), and it stays a proposal until the director rules on it or the spec adopts it.
 
 Severity, used for criteria and flags alike: **Blocker** fails the gate. **High** fails the gate unless the director waives it in writing. **Medium** gives PASS WITH FIXES, and the fix has to land before Roi's gate. **Low** is a note.

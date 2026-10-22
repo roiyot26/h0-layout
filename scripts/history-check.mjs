@@ -110,6 +110,25 @@ export function findPhone(text) {
   return PHONE.some((re) => re.test(text));
 }
 
+// Document and instance IDs (XMP uuid:, xmp.iid:, xmp.did:, xmp.id: values and
+// bare 8-4-4-4-12 GUIDs) are random hex, and their digit runs can look like a
+// phone number. Blank only those exact shapes, and only for the phone scan; the
+// banned-term scan always sees the text as it is.
+const HEX_GUID = '[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}';
+const ID_SHAPES = [
+  new RegExp(`\\b(?:uuid|xmp\\.(?:iid|did|id)):(?:${HEX_GUID}|[0-9a-f]{32})(?![0-9a-z-])`, 'gi'),
+  new RegExp(`(?<![0-9a-z-])${HEX_GUID}(?![0-9a-z-])`, 'gi'),
+];
+
+export function blankIds(text) {
+  return ID_SHAPES.reduce((t, re) => t.replace(re, '[id]'), text);
+}
+
+// The phone check the scan runs: IDs blanked first.
+export function findPhoneOutsideIds(text) {
+  return findPhone(blankIds(text));
+}
+
 function git(args, opts = {}) {
   return execFileSync('git', args, { maxBuffer: 1 << 30, ...opts });
 }
@@ -133,8 +152,8 @@ function textForScan(path, rawLatin1) {
     }).toString('utf8');
     const pageText = run('pdftotext', ['-layout', tmp, '-']);
     // Every document-info field, custom keys and multi-line values included,
-    // plus the XMP packet. Their size, date and ID lines don't match the
-    // phone patterns, so nothing is filtered out.
+    // plus the XMP packet. Their ID values are blanked before the phone scan
+    // (see blankIds); nothing else is filtered out.
     const info = run('pdfinfo', ['-custom', tmp]);
     const xmp = run('pdfinfo', ['-meta', tmp]);
     return [pageText, info, xmp].join('\n');
@@ -153,7 +172,7 @@ function textForScan(path, rawLatin1) {
 function scanText(where, text, path = null, context = path ? 'content' : 'metadata') {
   const hits = findBanned(text, path, entries, context);
   if (hits.length) report(where, `banned term (hash ${hits.join(', ')})`);
-  if (findPhone(text)) report(where, 'phone number pattern');
+  if (findPhoneOutsideIds(text)) report(where, 'phone number pattern');
 }
 
 const seenBlobs = new Set();

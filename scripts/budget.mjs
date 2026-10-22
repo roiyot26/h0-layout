@@ -1,14 +1,17 @@
 #!/usr/bin/env node
 // Byte budget for the built site. Fails the build on any overage; caps are never raised.
-// M0 has one route (the placeholder), so this checks:
+// It checks:
 //   - the first-screen set of every HTML page (the page plus the JS, CSS, fonts and
-//     images it references, including fonts pulled in by its CSS), gzip, against the
-//     first-screen cap,
-//   - the whole build output, raw bytes, against the desktop first-load cap.
-// The per-route caps and the per-tier first-load lists from assets.json arrive with M1-M3.
+//     images it references, including fonts pulled in by its CSS), gzip, against its
+//     route's cap in scripts/routes.mjs (TECH-PLAN §1), or the 200 KB first-screen cap
+//     for pages that aren't routes (404.html),
+//   - the whole build output, raw bytes, against the desktop first-load cap,
+//   - each file route (/cv.pdf) against its own raw-size cap.
+// The per-tier first-load lists from assets.json arrive with M2-M3.
 import { readFileSync, readdirSync, statSync } from 'node:fs';
 import { join, relative } from 'node:path';
 import { gzipSync } from 'node:zlib';
+import { outFile, routes } from './routes.mjs';
 
 const dist = process.argv[2] ?? 'dist';
 const KB = 1024;
@@ -46,9 +49,12 @@ for (const page of files.filter((f) => f.endsWith('.html'))) {
     }
     total += gz(local);
   }
-  const ok = total <= FIRST_SCREEN_CAP;
+  const rel = relative(dist, page).replace(/\\/g, '/');
+  const route = routes.find((r) => !r.file && outFile(r.path) === rel);
+  const cap = route ? route.cap * KB : FIRST_SCREEN_CAP;
+  const ok = total <= cap;
   failed ||= !ok;
-  console.log(`budget: first screen ${relative(dist, page)} ${(total / KB).toFixed(1)} KB gzip (cap ${FIRST_SCREEN_CAP / KB} KB) ${ok ? 'ok' : 'OVER'}`);
+  console.log(`budget: first screen ${rel} ${(total / KB).toFixed(1)} KB gzip (cap ${cap / KB} KB) ${ok ? 'ok' : 'OVER'}`);
 }
 
 const raw = files.reduce((n, f) => n + statSync(f).size, 0);
@@ -56,15 +62,17 @@ const okTotal = raw <= DESKTOP_TOTAL_CAP;
 failed ||= !okTotal;
 console.log(`budget: total ${dist} ${(raw / KB).toFixed(1)} KB raw (cap ${DESKTOP_TOTAL_CAP / 1e6} MB) ${okTotal ? 'ok' : 'OVER'}`);
 
-const CV_CAP = 300 * KB;
-const cv = files.find((f) => relative(dist, f).replace(/\\/g, '/') === 'cv.pdf');
-if (!cv) {
-  console.error('budget: dist/cv.pdf is missing');
-  failed = true;
-} else {
-  const cvSize = statSync(cv).size;
-  const okCv = cvSize <= CV_CAP;
-  failed ||= !okCv;
-  console.log(`budget: cv.pdf ${(cvSize / KB).toFixed(1)} KB raw (cap ${CV_CAP / KB} KB) ${okCv ? 'ok' : 'OVER'}`);
+for (const r of routes.filter((x) => x.file)) {
+  const name = outFile(r.path);
+  const file = files.find((f) => relative(dist, f).replace(/\\/g, '/') === name);
+  if (!file) {
+    console.error(`budget: dist/${name} is missing`);
+    failed = true;
+    continue;
+  }
+  const size = statSync(file).size;
+  const ok = size <= r.cap * KB;
+  failed ||= !ok;
+  console.log(`budget: ${name} ${(size / KB).toFixed(1)} KB raw (cap ${r.cap} KB) ${ok ? 'ok' : 'OVER'}`);
 }
 process.exit(failed ? 1 : 0);

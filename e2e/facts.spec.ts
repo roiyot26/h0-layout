@@ -1,12 +1,12 @@
 import { test, expect } from '@playwright/test';
-import { routes } from '../scripts/routes.mjs';
+import { pages } from '../scripts/routes.mjs';
 
 const viewports = [
   { name: '1440', width: 1440, height: 900 },
   { name: '390', width: 390, height: 844 },
 ] as const;
 
-for (const route of routes) {
+for (const route of pages) {
   for (const vp of viewports) {
     test.describe(`${route.path} @ ${vp.name} (JS off)`, () => {
       test.use({ viewport: { width: vp.width, height: vp.height } });

@@ -1,12 +1,10 @@
 import { test, expect } from '@playwright/test';
-import { inFirstViewport, isPlaceholderHome } from './hiring-helpers';
+import { inFirstViewport } from './hiring-helpers';
 
 // Hiring rules 1 and 3: these facts are fixed here, not in scripts/routes.mjs, so a
 // content change can't drop a fact together with its check. Each must be visible inside
 // the first viewport at 1440 and 390 with JS off.
 
-// Placeholder switch: delete the isPlaceholderHome skip in the PR that replaces the
-// placeholder home. It fails rather than skips if the page isn't really the placeholder.
 const LINKEDIN = 'https://www.linkedin.com/in/roi-yotvat-874ba9209/';
 const GITHUB = 'https://github.com/roiyot26';
 
@@ -22,7 +20,6 @@ for (const vp of viewports) {
     test('name, role, portfolio, CV and contact in the first viewport', async ({ page }) => {
       const response = await page.goto('./', { waitUntil: 'domcontentloaded' });
       expect(response?.status(), 'status for /').toBe(200);
-      test.skip(await isPlaceholderHome(page), 'placeholder home (exact title and text)');
 
       await expect(page.locator('h1')).toContainText('Roi Yotvat');
       await inFirstViewport(page, 'h1', 'name', { text: 'Roi Yotvat' });
