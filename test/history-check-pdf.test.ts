@@ -85,6 +85,16 @@ describe('history check on PDFs', () => {
     expect(r.code).toBe(1);
     expect(r.out).toMatch(/phone number pattern/);
   });
+  it('flags a phone number on a continuation line of a multi-line field', () => {
+    const r = scan('multiline.pdf', makePdf('Tel Aviv', [], { info: { Title: 'CV', Subject: `Contact\\n${phoneText}` } }));
+    expect(r.code).toBe(1);
+    expect(r.out).toMatch(/phone number pattern/);
+  });
+  it('flags a phone number in a custom document-info key', () => {
+    const r = scan('custom.pdf', makePdf('Tel Aviv', [], { info: { Title: 'CV', Note: phoneText } }));
+    expect(r.code).toBe(1);
+    expect(r.out).toMatch(/phone number pattern/);
+  });
   it('does not flag XMP timestamps or document IDs', () => {
     const fields = '<xmp:CreateDate>2026-10-22T12:38:40+03:00</xmp:CreateDate>'
       + '<xmpMM:DocumentID>uuid:0b6a1c2e-1234-4a5b-9c8d-001122334455</xmpMM:DocumentID>';

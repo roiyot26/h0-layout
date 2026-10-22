@@ -132,16 +132,11 @@ function textForScan(path, rawLatin1) {
       stdio: ['ignore', 'pipe', 'pipe'],
     }).toString('utf8');
     const pageText = run('pdftotext', ['-layout', tmp, '-']);
-    // Document-info fields, filtered: the size and date lines would trip the
-    // phone pattern.
-    const info = run('pdfinfo', [tmp])
-      .split('\n')
-      .filter((l) => /^(Title|Subject|Keywords|Author|Creator|Producer):/.test(l))
-      .join('\n');
-    // XMP metadata, minus timestamps and document IDs for the same reason.
-    const xmp = run('pdfinfo', ['-meta', tmp])
-      .replace(/\d{4}-\d{2}-\d{2}T[\d:.+\-Z]*/g, ' ')
-      .replace(/uuid:[0-9a-f-]+/gi, ' ');
+    // Every document-info field, custom keys and multi-line values included,
+    // plus the XMP packet. Their size, date and ID lines don't match the
+    // phone patterns, so nothing is filtered out.
+    const info = run('pdfinfo', ['-custom', tmp]);
+    const xmp = run('pdfinfo', ['-meta', tmp]);
     return [pageText, info, xmp].join('\n');
   } catch (err) {
     // Fail closed: a PDF we cannot read as text is a problem, not a pass.
