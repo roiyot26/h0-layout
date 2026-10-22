@@ -4,6 +4,7 @@ import { spawnSync } from 'node:child_process';
 import { existsSync, readFileSync, statSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { actualTexts, cvSourceStrings, joinedWords } from './cv-source.mjs';
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
 const pdf = process.argv[2] ?? join(root, 'public/cv.pdf');
@@ -65,6 +66,28 @@ else ok('Tagged: yes');
   if (!catalog) fail('catalog object not found (object streams are not supported here)');
   else if (lang !== 'en') fail(`/Lang=${JSON.stringify(lang)} (want "en")`);
   else ok('/Lang en');
+}
+
+// Tag text: Chrome puts no space at a soft line wrap, so the marked content
+// glues words together across lines ("withLLM"). build-cv.mjs gives each
+// prose block its source string as /ActualText, which is what assistive tech
+// reads. Poppler's -struct-text prints the marked content and ignores
+// /ActualText, so count the wrap joins there and require every block that has
+// one to carry /ActualText equal to its source in cv/cv.html.
+{
+  const sources = cvSourceStrings(readFileSync(join(root, 'cv/cv.html'), 'utf8'));
+  const struct = spawnSync('pdfinfo', ['-struct-text', pdf], { encoding: 'utf8' });
+  if (struct.status !== 0) fail('pdfinfo -struct-text failed');
+  const actual = actualTexts(readFileSync(pdf).toString('latin1'));
+  if (actual.includes(null)) fail('an /ActualText is not a UTF-16BE hex string');
+  const stale = actual.filter((t) => t !== null && !sources.includes(t));
+  if (stale.length) fail(`/ActualText not in cv/cv.html (rebuild the PDF?): ${stale.map((t) => JSON.stringify(t.slice(0, 40))).join(', ')}`);
+  const missing = sources.filter((s) => !actual.includes(s));
+  if (missing.length) fail(`${missing.length} prose block(s) without /ActualText: ${missing.map((t) => JSON.stringify(t.slice(0, 40))).join(', ')}`);
+  const wraps = joinedWords(sources, struct.stdout || '');
+  const joined = wraps.filter((j) => !actual.includes(j.source));
+  if (joined.length) fail(`tag text joins ${joined.length} word pair(s): ${joined.map((j) => j.glued).join(', ')}`);
+  else ok(`tag text: 0 joined words (${sources.length} blocks with /ActualText; ${wraps.length} wrap joins in the marked content)`);
 }
 
 const metaDump = spawnSync('pdfinfo', ['-meta', pdf], { encoding: 'utf8' });
