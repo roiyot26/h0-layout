@@ -48,6 +48,11 @@ if ((meta.Title || '') !== 'Roi Yotvat — CV' && (meta.Title || '') !== 'Roi Yo
   else ok(`Title ${meta.Title}`);
 } else ok(`Title`);
 
+// Tagged PDF: the cleaner must keep Chrome's structure tree and /Lang
+// (CI also runs: pdfinfo public/cv.pdf | grep -q 'Tagged: *yes').
+if (!/^Tagged: *yes$/m.test(info.stdout)) fail('PDF is not tagged (want Tagged: yes)');
+else ok('Tagged: yes');
+
 const metaDump = spawnSync('pdfinfo', ['-meta', pdf], { encoding: 'utf8' });
 const metaText = `${info.stdout}\n${metaDump.stdout || ''}`;
 const metaBad = [

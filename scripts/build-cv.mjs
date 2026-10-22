@@ -92,11 +92,14 @@ writeFileSync(
   cleaner,
   `
 from pypdf import PdfReader, PdfWriter
+from pypdf.generic import NameObject
 r = PdfReader(${JSON.stringify(rawPdf)})
-w = PdfWriter()
-for p in r.pages:
-    w.add_page(p)
-# Drop any embedded XMP / metadata stream the writer would otherwise keep.
+# Clone the whole document so Chrome's structure tree, /MarkInfo and /Lang
+# survive (copying pages one by one drops them and leaves the PDF untagged).
+w = PdfWriter(clone_from=r)
+w.pdf_header = r.pdf_header
+# Drop any embedded XMP / metadata stream and the producer info dictionary.
+w._root_object.pop(NameObject("/Metadata"), None)
 w.metadata = None
 w.add_metadata({
     "/Author": "Roi Yotvat",
