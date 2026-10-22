@@ -194,3 +194,14 @@ for (const vp of [
     expect(hidden, `focused under the bar: ${hidden.join(' | ')}`).toEqual([]);
   });
 }
+
+// Arrows are hidden inline SVG, so they're not part of any link's name.
+test('link names carry no arrow', async ({ page }) => {
+  await page.goto('behind-the-scenes');
+  await expect(page.getByRole('link', { name: 'Source on GitHub', exact: true })).toHaveCount(1);
+  await page.goto('now/kage-diagram');
+  await expect(page.getByRole('link', { name: 'Back to the City', exact: true })).toHaveCount(1);
+  await page.goto('');
+  const names = await page.locator('a').evaluateAll((as) => as.map((a) => a.textContent ?? ''));
+  expect(names.filter((n) => /[↗←→]/.test(n))).toEqual([]);
+});

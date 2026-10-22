@@ -217,6 +217,11 @@ blockquote { margin: 8px 0; padding-left: 14px; border-left: 3px solid var(--ena
 .paper .corner[aria-current='page'] { border-color: var(--ink); }
 .kage-top { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; margin-bottom: 12px; }
 .kage-top h1 { font: 600 15px/1.2 'Barlow Semi Condensed', 'Barlow SC Caps Fallback', system-ui, sans-serif; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); margin: 0; }
+/* Inline SVG arrows (see arrow() in pages.ts), sized and spaced like the characters
+   they replace. */
+.arrow { display: inline-block; width: 1em; height: 1em; flex: none; vertical-align: -0.125em; }
+.arrow.ext { margin-left: 0.25em; }
+.arrow.back-arrow { margin-right: 0.3em; }
 .back {
   display: inline-flex; align-items: center; min-height: 44px; padding: 0 12px;
   font: 600 15px/1 var(--sans); color: var(--enamel); background: var(--paper);

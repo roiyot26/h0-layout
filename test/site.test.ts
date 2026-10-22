@@ -243,3 +243,23 @@ describe('teaching station wording', () => {
     });
   }
 });
+
+describe('arrows', () => {
+  // The web fonts have no arrow glyphs, so links use inline SVG arrows instead.
+  for (const showCompanies of [true, false]) {
+    it(`uses no arrow characters, only hidden 1em SVG arrows (names ${showCompanies ? 'on' : 'off'})`, () => {
+      const site = renderSite(opts({ showCompanies }));
+      let arrows = 0;
+      for (const [path, html] of site) {
+        expect(html, path).not.toMatch(/[↗←→]|&(?:nearr|larr|rarr);|&#x?(?:2197|8599|2190|8592|2192|8594);/i);
+        for (const svg of html.match(/<svg class="arrow[^>]*>/g) ?? []) {
+          arrows++;
+          expect(svg).toContain('width="1em" height="1em"');
+          expect(svg).toContain('stroke="currentColor"');
+          expect(svg).toContain('aria-hidden="true" focusable="false"');
+        }
+      }
+      expect(arrows).toBeGreaterThan(0);
+    });
+  }
+});

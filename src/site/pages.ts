@@ -44,8 +44,16 @@ const routeFor = (path: string): Route => {
 
 type Ctx = SiteOptions & { u: (path: string) => string; tx: (text: Text) => string };
 
+// Arrows are inline SVG rather than ↗/← characters: the web fonts have no arrow
+// glyphs, so the characters fell back to a system font, and as SVG they stay out of
+// the link's accessible name. 1em square, drawn in the link's colour.
+const arrow = (d: string, cls: string) =>
+  `<svg class="arrow ${cls}" width="1em" height="1em" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="${d}"/></svg>`;
+const arrowOut = arrow('M4.5 11.5 11.5 4.5M5.5 4.5h6v6', 'ext');
+const arrowBack = arrow('M13 8H3M7.5 3.5 3 8l4.5 4.5', 'back-arrow');
+
 const external = (url: string, label: string, extra = '') =>
-  `<a href="${esc(url)}" rel="noopener"${extra}>${esc(label)}<span class="ext" aria-hidden="true"> ↗</span></a>`;
+  `<a href="${esc(url)}" rel="noopener"${extra}>${esc(label)}${arrowOut}</a>`;
 
 function emailLink(c: Ctx, cls = 'email', keepSpace = false): string {
   // Static HTML carries the parts reversed. With JS off the visible text reads
@@ -272,7 +280,7 @@ function kagePage(c: Ctx): string {
   const body = `<article class="kage-page">
   <div class="kage-top">
     <h1>${esc(kage.diagramKicker)}</h1>
-    <a class="back" href="${c.u('/now')}">← Back to the City</a>
+    <a class="back" href="${c.u('/now')}">${arrowBack}Back to the City</a>
   </div>
   <figure class="kage-figure">
     ${fill(desktopSvg)}
