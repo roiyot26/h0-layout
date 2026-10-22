@@ -15,6 +15,7 @@ concurrency:
 jobs:
   lint:
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@v5
       - uses: actions/setup-node@v5
@@ -24,6 +25,7 @@ jobs:
 
   test:
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     steps:
       - uses: actions/checkout@v5
       - uses: actions/setup-node@v5
@@ -35,6 +37,7 @@ jobs:
 
   build:
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     strategy:
       matrix:
         site_base: ['/h0-layout/', '/']
@@ -55,6 +58,7 @@ jobs:
 
   budget:
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@v5
       - uses: actions/setup-node@v5
@@ -70,6 +74,7 @@ jobs:
 
   history:
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     steps:
       # Check out the PR head itself, not the merge ref GitHub builds for the run,
       # so only commits that will really be in the history are checked.
@@ -88,6 +93,7 @@ jobs:
 
   gitleaks:
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     env:
       GITLEAKS_VERSION: 8.30.1
     steps:
@@ -107,6 +113,7 @@ jobs:
 
   glb:
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@v5
       - uses: actions/setup-node@v5
@@ -120,6 +127,7 @@ jobs:
   links:
     name: links
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@v5
       - uses: actions/setup-node@v5
@@ -147,6 +155,7 @@ jobs:
   facts:
     name: facts
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     steps:
       - uses: actions/checkout@v5
       - uses: actions/setup-node@v5
@@ -174,6 +183,7 @@ jobs:
   axe:
     name: axe
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     steps:
       - uses: actions/checkout@v5
       - uses: actions/setup-node@v5
@@ -209,6 +219,7 @@ jobs:
   content:
     name: content
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@v5
       - uses: actions/setup-node@v5
@@ -232,6 +243,7 @@ jobs:
   cv:
     name: cv
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     steps:
       - uses: actions/checkout@v5
       - uses: actions/setup-node@v5
