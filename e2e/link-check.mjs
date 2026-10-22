@@ -1,7 +1,9 @@
 #!/usr/bin/env node
 // Walk every HTML (and CSS) file under DIST_DIR. Internal links and anchors fail the
-// job when the target is missing. External links are soft: a fetch failure is a
-// warning, and hosts on the allowlist are skipped so CI stays quiet.
+// job when the target is missing. External links are fetched: HTTP 404 or 410 or a
+// DNS failure fails the job, anything else that goes wrong (rate limits, 5xx, bot
+// walls, timeouts) is a warning. Hosts in external-allowlist.json are never fetched;
+// every link to them must exactly equal one of their pinned URLs.
 import { readFile, readdir, stat } from 'node:fs/promises';
 import { dirname, extname, join, relative, resolve, sep } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
@@ -12,9 +14,12 @@ const here = dirname(fileURLToPath(import.meta.url));
 const dist = resolve(process.env.DIST_DIR ?? join(here, '../dist'));
 const siteBase = process.env.SITE_BASE ?? '/h0-layout/';
 const baseNoSlash = siteBase.replace(/\/$/, '') || '';
-const allow = new Set(
-  JSON.parse(await readFile(new URL('./external-allowlist.json', import.meta.url), 'utf8')).hosts,
-);
+const pinned = JSON.parse(
+  await readFile(new URL('./external-allowlist.json', import.meta.url), 'utf8'),
+).pinned;
+/** The pinned-host key that covers `host` (the host itself or a parent domain), or null. */
+const pinnedHost = (host) =>
+  Object.keys(pinned).find((h) => host === h || host.endsWith(`.${h}`)) ?? null;
 
 const failures = [];
 const warnings = [];
@@ -192,7 +197,14 @@ for (const ref of refs) {
     continue;
   }
   if (c.kind === 'external') {
-    if (allow.has(c.host) || seenExternal.has(c.href)) continue;
+    const pin = pinnedHost(c.host);
+    if (pin) {
+      if (!pinned[pin].includes(c.href)) {
+        log(failures, `FAIL ${ref.file}: ${c.href} is not a pinned URL for ${pin} (${ref.via})`);
+      }
+      continue;
+    }
+    if (seenExternal.has(c.href)) continue;
     seenExternal.add(c.href);
     try {
       const ac = new AbortController();
@@ -203,8 +215,17 @@ for (const ref of refs) {
         headers: { 'user-agent': 'h0-layout-link-check/1.0' },
       });
       clearTimeout(t);
-      if (!res.ok) log(warnings, `WARN external ${c.href} → HTTP ${res.status} (from ${ref.file})`);
+      // Gone is gone: 404 and 410 fail. Rate limits, 5xx and bot walls only warn.
+      if (res.status === 404 || res.status === 410) {
+        log(failures, `FAIL external ${c.href} → HTTP ${res.status} (from ${ref.file})`);
+      } else if (!res.ok) {
+        log(warnings, `WARN external ${c.href} → HTTP ${res.status} (from ${ref.file})`);
+      }
     } catch (err) {
+      if (err?.cause?.code === 'ENOTFOUND') {
+        log(failures, `FAIL external ${c.href} → DNS ENOTFOUND (from ${ref.file})`);
+        continue;
+      }
       log(warnings, `WARN external ${c.href} → ${err.name ?? 'error'} (from ${ref.file})`);
     }
   }
