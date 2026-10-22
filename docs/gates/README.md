@@ -11,6 +11,13 @@ From M1 on, every milestone passes five gates in this order:
 4. `hiring`: hiring-rules reviewer
 5. `owner`: the owner's approval
 
+**Lean mode (current).** Milestone work currently runs in a lean mode. Each PR
+gets the QA gate only. The design, UX and outside (hiring-rules) reviews happen
+once, together, at the milestone checkpoint, on the milestone's preview; the
+owner's approval follows them. A fix gets one recheck, by the reviewer who raised
+it, on that point only. The five-gate order above applies again when lean mode
+ends.
+
 M0 used the earlier four-gate order (design, QA, hiring rules, owner); its owner
 record is `M0-owner-approval-6b53ca6.md`.
 
