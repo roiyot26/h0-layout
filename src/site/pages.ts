@@ -115,7 +115,7 @@ ${body}
 function describe(route: Route): string {
   switch (route.path) {
     case '/':
-      return 'Roi Yotvat, full-stack developer. A portfolio laid out as an H0 model railway: four stations, one per part of the career.';
+      return 'Roi Yotvat, full-stack developer. A portfolio laid out as an H0 model railway: four stations, one per part of his career.';
     case '/timetable':
       return 'Every fact on one plain page: roles, years, Kage, side projects and contact.';
     case '/contact':
