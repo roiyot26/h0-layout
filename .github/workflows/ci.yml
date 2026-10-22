@@ -117,6 +117,22 @@ jobs:
       - name: meshopt, KTX2 and caps
         run: npm run glb-check
 
+  cv:
+    name: cv
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with: { node-version: 20, cache: npm }
+      - run: npm ci
+      - name: Install poppler (pdfinfo, pdftotext)
+        run: sudo apt-get update -qq && sudo apt-get install -y -qq poppler-utils
+      - name: Verify public/cv.pdf
+        run: npm run cv-check
+      - name: public/cv.pdf is tagged
+        run: |
+          pdfinfo public/cv.pdf | grep -q 'Tagged: *yes'
+
   links:
     name: links
     runs-on: ubuntu-latest

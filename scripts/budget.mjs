@@ -55,4 +55,16 @@ const raw = files.reduce((n, f) => n + statSync(f).size, 0);
 const okTotal = raw <= DESKTOP_TOTAL_CAP;
 failed ||= !okTotal;
 console.log(`budget: total ${dist} ${(raw / KB).toFixed(1)} KB raw (cap ${DESKTOP_TOTAL_CAP / 1e6} MB) ${okTotal ? 'ok' : 'OVER'}`);
+
+const CV_CAP = 300 * KB;
+const cv = files.find((f) => relative(dist, f).replace(/\\/g, '/') === 'cv.pdf');
+if (!cv) {
+  console.error('budget: dist/cv.pdf is missing');
+  failed = true;
+} else {
+  const cvSize = statSync(cv).size;
+  const okCv = cvSize <= CV_CAP;
+  failed ||= !okCv;
+  console.log(`budget: cv.pdf ${(cvSize / KB).toFixed(1)} KB raw (cap ${CV_CAP / KB} KB) ${okCv ? 'ok' : 'OVER'}`);
+}
 process.exit(failed ? 1 : 0);
