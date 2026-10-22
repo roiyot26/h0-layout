@@ -126,10 +126,16 @@ function textForScan(path, rawLatin1) {
   const tmp = join(tmpdir(), `h0-hist-${process.pid}-${Math.random().toString(16).slice(2)}.pdf`);
   try {
     writeFileSync(tmp, Buffer.from(rawLatin1, 'latin1'));
-    return execFileSync('pdftotext', ['-layout', tmp, '-'], { maxBuffer: 1 << 20 }).toString('utf8');
-  } catch {
+    return execFileSync('pdftotext', ['-layout', tmp, '-'], {
+      maxBuffer: 64 << 20,
+      stdio: ['ignore', 'pipe', 'pipe'],
+    }).toString('utf8');
+  } catch (err) {
     // Fail closed: a PDF we cannot read as text is a problem, not a pass.
-    report(path, 'could not extract PDF text (is poppler-utils installed?)');
+    const why = err.code === 'ENOENT'
+      ? 'pdftotext not found (install poppler-utils)'
+      : (err.stderr?.toString().trim().split('\n').pop() || err.message);
+    report(path, `could not extract PDF text: ${why}`);
     return '';
   } finally {
     try { unlinkSync(tmp); } catch { /* ignore */ }
