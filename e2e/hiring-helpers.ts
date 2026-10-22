@@ -122,3 +122,42 @@ function readable(root: Element, arg: { vw: number; vh: number; text: string | n
   if (nodes.length && !checked) problems.push('no readable text');
   return { problems, seen: seen.replace(/\s+/g, ' ') };
 }
+
+// Placeholder switch. The hiring checks may be skipped only on the real placeholder
+// home: its exact title, its exact text and none of the real home's content. A page
+// with the placeholder title and anything else fails, in CI and locally, so the switch
+// can't be left on by a home that kept the old title. Delete this and its call in the
+// PR that replaces the placeholder home.
+export const PLACEHOLDER_TITLE = 'H0 layout · Coming soon';
+// The placeholder's body text with all whitespace removed (index.html on main).
+export const PLACEHOLDER_TEXT =
+  'ComingsoonDeparturesTimeDestinationPlatformRemarks--:--H0LAYOUT1COMINGSOON' +
+  'Thelayoutisstillontheworkbench.Pleasecheckthetimetableagainsoon.Scale1:87(H0).';
+
+export async function isPlaceholderHome(page: Page): Promise<boolean> {
+  const title = await page.title();
+  if (title !== PLACEHOLDER_TITLE) return false;
+  const found = await page.evaluate(() => {
+    const out: string[] = [];
+    const text = (document.body?.textContent ?? '').replace(/\s+/g, '');
+    const has = (sel: string) => document.querySelector(sel) !== null;
+    if (/roiyotvat/i.test(text)) out.push('the name');
+    if (/full-?stackdeveloper/i.test(text)) out.push('the role line');
+    if (/portfolio/i.test(text)) out.push('"portfolio"');
+    if (/\[at\]/i.test(text)) out.push('an obfuscated email');
+    if (has('a[href$="cv.pdf"]')) out.push('a CV link');
+    if (has('a[href*="linkedin.com"]')) out.push('a LinkedIn link');
+    if (has('a[href*="github.com"]')) out.push('a GitHub link');
+    if (has('nav, #contact')) out.push('a nav or #contact');
+    if (has('a[href]')) out.push('links');
+    return { out, text };
+  });
+  const problems = [...found.out];
+  if (found.text !== PLACEHOLDER_TEXT) problems.push('text that differs from the placeholder');
+  expect(
+    problems,
+    `the page has the placeholder title but is not the placeholder home (${process.env.CI ? 'CI' : 'local'}); ` +
+      'remove the placeholder switch or restore the placeholder',
+  ).toEqual([]);
+  return true;
+}
