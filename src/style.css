@@ -101,6 +101,15 @@ a { color: inherit; }
 .board a:focus-visible { outline: none; }
 .board tbody tr:has(a:focus-visible) { outline: 3px solid var(--signal); outline-offset: -1px; }
 
+/* Fixed layout at 883 px and up: 51 cells plus 84 px of spacing and padding, so the
+   board is exactly 51 pitches wide (1116 px at 1440). */
+@media (min-width: 883px) {
+  .board { table-layout: fixed; width: calc(51 * var(--pitch) + 84px); }
+  .board col.c-time { width: calc(7 * var(--pitch)); }
+  .board col.c-dest { width: calc(11 * var(--pitch)); }
+  .board col.c-plat { width: calc(8 * var(--pitch)); }
+  .board col.c-rem { width: calc(25 * var(--pitch)); }
+}
 @media (max-width: 1163px) {
   .board-wrap { --fs: calc((100vw - 132px) / 46.92); }
 }

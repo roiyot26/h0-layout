@@ -149,6 +149,7 @@ function board(c: Ctx): string {
   return `<div class="board-wrap">
 <table class="board">
   <caption>${esc(boardExtra.title)}</caption>
+  <colgroup><col class="c-time" /><col class="c-dest" /><col class="c-plat" /><col class="c-rem" /></colgroup>
   <thead><tr><th scope="col" class="c-time">TIME</th><th scope="col" class="c-dest">DESTINATION</th><th scope="col" class="c-plat">PLATFORM</th><th scope="col" class="c-rem">REMARKS</th></tr></thead>
   <tbody>
     ${rows.join('\n    ')}
