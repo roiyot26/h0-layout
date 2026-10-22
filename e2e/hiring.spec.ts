@@ -1,4 +1,5 @@
-import { test, expect, type Page } from '@playwright/test';
+import { test, expect } from '@playwright/test';
+import { inFirstViewport } from './hiring-helpers';
 
 // Hiring rules 1 and 3: these facts are fixed here, not in scripts/routes.mjs, so a
 // content change can't drop a fact together with its check. Each must be visible inside
@@ -15,22 +16,6 @@ const viewports = [
   { name: '390', width: 390, height: 844 },
 ] as const;
 
-async function inFirstViewport(page: Page, sel: string, label: string) {
-  const el = page.locator(sel).first();
-  await expect(el, `${label} not visible`).toBeVisible();
-  const box = await el.boundingBox();
-  const vp = page.viewportSize()!;
-  expect(box, `${label} has no box`).toBeTruthy();
-  expect(
-    box!.width > 2 && box!.height > 2,
-    `${label} is clipped to ${box!.width}x${box!.height}`,
-  ).toBe(true);
-  expect(
-    box!.x >= 0 && box!.y >= 0 && box!.x + box!.width <= vp.width && box!.y + box!.height <= vp.height,
-    `${label} is outside the first viewport: ${JSON.stringify(box)}`,
-  ).toBe(true);
-}
-
 for (const vp of viewports) {
   test.describe(`hiring facts on / @ ${vp.name} (JS off)`, () => {
     test.use({ viewport: { width: vp.width, height: vp.height } });
@@ -41,7 +26,7 @@ for (const vp of viewports) {
       test.skip((await page.title()) === PLACEHOLDER_TITLE, 'placeholder home');
 
       await expect(page.locator('h1')).toContainText('Roi Yotvat');
-      await inFirstViewport(page, 'h1', 'name');
+      await inFirstViewport(page, 'h1', 'name', { text: 'Roi Yotvat' });
       await inFirstViewport(page, ':is(p,div,span,h2):text-matches("^Full-stack developer")', 'role line');
       await inFirstViewport(page, ':is(p,div,span,h1,h2):text-matches("\\\\bportfolio\\\\b", "i")', '"portfolio"');
       await inFirstViewport(page, 'a[href$="/cv.pdf"]', 'CV link');
