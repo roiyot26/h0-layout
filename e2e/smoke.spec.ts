@@ -2,8 +2,8 @@ import { test, expect } from '@playwright/test';
 import { pages } from '../scripts/routes.mjs';
 
 // JS on: no page errors or console errors on any route at 1440 and 390, and on the home
-// and contact pages the obfuscated email assembles into a working address when it's
-// clicked.
+// and contact pages every email link reads "Email" and becomes a working mail link
+// when it's clicked, without the address ever being shown.
 
 const viewports = [
   { name: '1440', width: 1440, height: 900 },
@@ -27,18 +27,29 @@ for (const route of pages) {
       expect(response!.status()).toBe(200);
 
       if (route.path === '/' || route.path === '/contact') {
-        const email = page.locator('a:has-text("[at]"):has-text("[dot]")');
-        await expect(email, `no obfuscated email link on ${route.path}`).not.toHaveCount(0);
-        await expect(email.first(), 'obfuscated email link not visible').toBeVisible();
-        // Hold the element itself: its text changes once the address is assembled.
-        const link = (await email.first().elementHandle())!;
-        await expect(email.first(), 'static email link is not named "Email"').toHaveAccessibleName('Email');
+        // Owner ruling: with JS on every email link reads just "Email", and the address
+        // only ever goes into the href. The expected address is rebuilt here from the
+        // link's own reversed parts, so this file never holds it.
+        const email = page.locator('a[data-u]');
+        await expect(email, `no email link on ${route.path}`).not.toHaveCount(0);
+        for (const a of await email.all()) {
+          await expect(a).toHaveText('Email', { useInnerText: true });
+          await expect(a).toHaveAccessibleName('Email');
+          expect(await a.getAttribute('aria-label')).toBeNull();
+        }
+        const link = email.first();
+        await expect(link).toBeVisible();
+        const expected = await link.evaluate((el: HTMLAnchorElement) => {
+          const f = (s?: string) => [...(s ?? '')].reverse().join('');
+          return `${f(el.dataset.u)}${String.fromCharCode(64)}${f(el.dataset.d)}.${f(el.dataset.t)}`;
+        });
+        expect(expected.split(String.fromCharCode(64)).length, 'built address has one at sign').toBe(2);
         await link.focus();
         await link.click();
-        expect(await link.getAttribute('href')).toMatch(/^mailto:[^@\s]+@[^@\s]+\.[a-z]{2,}$/);
-        expect(await link.textContent()).toMatch(/^[^@\s]+@[^@\s]+\.[a-z]{2,}$/);
-        expect(await link.getAttribute('aria-label'), 'aria-label left on the written address').toBeNull();
-        expect(await link.evaluate((el) => el.querySelector('.visually-hidden, [aria-hidden]')), 'hidden "Email" name left on the written address').toBeNull();
+        expect((await link.getAttribute('href')) === `mailto:${expected}`, 'href is the mail link to the built address').toBe(true);
+        await expect(link).toHaveText('Email', { useInnerText: true });
+        const shown = await page.evaluate(() => document.body.innerText + document.body.textContent);
+        expect(shown.includes(expected), 'the address is shown as text').toBe(false);
       }
 
       expect(errors, errors.join('\n')).toEqual([]);

@@ -54,6 +54,19 @@ describe('dist-guard', () => {
       });
     }
 
+    it('passes the shipped email link: an "Email" label over reversed parts', () => {
+      const rev = (x: string) => [...x].reverse().join('');
+      const link = `<a class="email" href="/h0-layout/contact/" data-u="${rev('user')}" data-d="${rev('example')}" data-t="${rev('com')}"><span class="visually-hidden">Email</span><span aria-hidden="true"><span class="rev">${rev('user')}</span> [at] example [dot] com</span></a>`;
+      const js = `const f=s=>[...s].reverse().join('');a.textContent='Email';a.href=f(':otliam')+f(u)+String.fromCharCode(64)+f(d)+'.'+f(t);`;
+      expect(run({ 'index.html': page(link), 'main.js': js }).code).toBe(0);
+    });
+
+    it('fails when the address is written out as the link text', () => {
+      const r = run({ 'index.html': page(`<a class="email" href="/h0-layout/contact/">${user[0]}${at}${host}</a>`) });
+      expect(r.code).toBe(1);
+      expect(r.out).toMatch(/FAIL index\.html:\d+: email address/);
+    });
+
     it('never prints any part of the match', () => {
       const r = run({ 'index.html': page(`${user[0]}<span>${at}</span>${host}`) });
       expect(r.out).not.toContain(user[0]);

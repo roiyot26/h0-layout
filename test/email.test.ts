@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { assemble } from '../src/email';
+import { assemble, label, LABEL } from '../src/email';
 
 // A stand-in for the anchor (the unit tests run without a DOM). The parts are made up,
 // reversed the way pages.ts writes them, so this file holds no real address. Setting
@@ -19,20 +19,31 @@ function fakeLink(attrs: [string, string][] = []) {
   };
 }
 
-describe('email link accessible name', () => {
-  it('keeps the hidden "Email" name until the address is written', () => {
+const address = ['user', 'example.test'].join(String.fromCharCode(64));
+
+describe('email link', () => {
+  it('reads just "Email" once the script runs, with no aria-label', () => {
+    const link = fakeLink([['aria-label', 'Email']]);
+    label(link as unknown as HTMLAnchorElement);
+    expect(LABEL).toBe('Email');
+    expect(link.innerHTML).toBe('Email');
+    expect(link.getAttribute('aria-label')).toBeNull();
+  });
+
+  it('sets only the mail href, never the address as text', () => {
+    const link = fakeLink();
+    label(link as unknown as HTMLAnchorElement);
+    assemble(link as unknown as HTMLAnchorElement);
+    expect(link.href).toBe(`mailto:${address}`);
+    expect(link.innerHTML).toBe('Email');
+    expect(link.innerHTML).not.toContain(String.fromCharCode(64));
+  });
+
+  it('leaves a link without parts alone', () => {
     const link = fakeLink();
     link.dataset.u = undefined;
     assemble(link as unknown as HTMLAnchorElement);
+    expect(link.href).toBe('/h0-layout/contact/');
     expect(link.innerHTML).toBe(STATIC);
-  });
-
-  it('replaces the "Email" name with the address once it is written', () => {
-    const link = fakeLink([['aria-label', 'Email']]);
-    assemble(link as unknown as HTMLAnchorElement);
-    expect(link.innerHTML).toBe(['user', 'example.test'].join(String.fromCharCode(64)));
-    expect(link.innerHTML).not.toContain('Email');
-    expect(link.href.startsWith('mailto:')).toBe(true);
-    expect(link.getAttribute('aria-label')).toBeNull();
   });
 });

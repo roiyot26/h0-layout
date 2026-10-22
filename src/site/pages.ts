@@ -49,11 +49,12 @@ const external = (url: string, label: string, extra = '') =>
 
 function emailLink(c: Ctx, cls = 'email', keepSpace = false): string {
   // Static HTML carries the parts reversed. With JS off the visible text reads
-  // "name [at] domain [dot] tld" (the name is shown reversed back by CSS); the page
-  // script rebuilds the real address on focus, pointerdown or click. Until then the
+  // "name [at] domain [dot] tld" (the name is shown reversed back by CSS), and the
   // link's accessible name is "Email": the reversed parts are hidden from screen
   // readers and a visually hidden "Email" names the link. (An aria-label would fail
-  // axe's label-in-name rule, because the visible text isn't part of the name.)
+  // axe's label-in-name rule, because the visible text isn't part of the name.) With
+  // JS on, the page script turns the text into just "Email" and puts the address in
+  // the href only, on focus, pointerdown or click.
   // keepSpace puts a no-break space after the reversed name: a plain space right
   // after the right-to-left span gets lost, so "[at]" ran into the name on /contact.
   const gap = keepSpace ? '&nbsp;' : ' ';
