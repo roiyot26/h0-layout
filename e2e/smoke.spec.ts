@@ -133,3 +133,18 @@ test('the home CV button changes its border on hover', async ({ page }) => {
   await expect.poll(border).not.toBe(rest);
   expect(await border()).toBe('rgb(242, 238, 228)');
 });
+
+// #22: Skip stays first in the Tab order but sits in the top-right corner, with
+// Departures top-left, as in the STYLE corner map.
+for (const width of [1440, 360]) {
+  test(`the top bar corners: Departures left, Skip right @ ${width}`, async ({ page }) => {
+    await page.setViewportSize({ width, height: 800 });
+    await page.goto('./');
+    const dep = await page.locator('.topbar a.corner:not(.skip)').boundingBox();
+    const skip = await page.locator('.topbar a.corner.skip').boundingBox();
+    const bar = await page.locator('.topbar').boundingBox();
+    expect(dep!.x).toBeCloseTo(bar!.x, 0);
+    expect(skip!.x + skip!.width).toBeCloseTo(bar!.x + bar!.width, 0);
+    expect(dep!.x).toBeLessThan(skip!.x);
+  });
+}
