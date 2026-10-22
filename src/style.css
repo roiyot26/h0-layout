@@ -145,6 +145,12 @@ a { color: inherit; }
   body { padding-inline: 16px; }
   .board-wrap { --fs: 15px; }
 }
+/* At 320 the 25-cell remarks line would run past the screen edge (M1-09): cap it
+   short of the screen edge and let it wrap. The 0.15em is the cell's left padding,
+   so at 360 all 25 cells still fit on one line. */
+@media (max-width: 360px) {
+  .board td.c-rem { white-space: normal; overflow-wrap: anywhere; width: min(calc(25 * var(--pitch) + 0.15em), calc(100vw - 20px)); height: auto; }
+}
 
 /* ---------- Sheets (station panels, plain pages) ---------- */
 .sheet {

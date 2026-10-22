@@ -147,6 +147,14 @@ for (const width of [1440, 390]) {
   });
 }
 
+// M1-09: no horizontal scroll on the home page down to 320 px.
+test('/ has no horizontal overflow @ 320', async ({ page }) => {
+  await page.setViewportSize({ width: 320, height: 780 });
+  await page.goto('./');
+  const width = await page.evaluate(() => document.documentElement.scrollWidth);
+  expect(width).toBeLessThanOrEqual(320);
+});
+
 // M1-03: Skip is the first Tab stop on every page, and sits left of Departures.
 test('the first Tab focuses Skip on every page', async ({ page }) => {
   for (const route of pages) {
