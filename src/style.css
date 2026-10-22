@@ -64,7 +64,7 @@ a { color: inherit; }
   font: 600 16px/1 var(--sans); letter-spacing: 0.04em; text-decoration: none;
   color: var(--ink-light); border: 2px solid var(--dim); border-radius: 3px;
 }
-.topbar .corner.skip { order: 1; }
+.topbar .corner.skip { order: 1; min-height: 48px; } /* STYLE §11: Skip is 48 px tall */
 .corner:hover { border-color: var(--ink-light); }
 .corner[aria-current='page'] { border-color: var(--signal); }
 

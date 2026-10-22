@@ -146,5 +146,6 @@ for (const width of [1440, 360]) {
     expect(dep!.x).toBeCloseTo(bar!.x, 0);
     expect(skip!.x + skip!.width).toBeCloseTo(bar!.x + bar!.width, 0);
     expect(dep!.x).toBeLessThan(skip!.x);
+    expect(skip!.height).toBeGreaterThanOrEqual(48);
   });
 }
