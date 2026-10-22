@@ -263,3 +263,14 @@ describe('arrows', () => {
     });
   }
 });
+
+describe('no internal course', () => {
+  // The internal course at the current job is off the site; the Coding Academy teaching stays.
+  for (const showCompanies of [true, false]) {
+    it(`no page mentions it (names ${showCompanies ? 'on' : 'off'})`, () => {
+      for (const [path, html] of renderSite(opts({ showCompanies }))) {
+        expect(html, path).not.toMatch(/internal web development course|course I built|taught it live|creative team/i);
+      }
+    });
+  }
+});

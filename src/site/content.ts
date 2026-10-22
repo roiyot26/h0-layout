@@ -184,13 +184,6 @@ export const nowParts: { title: string; body: Text }[] = [
     title: 'Coding agents in the team.',
     body: "I brought AI coding agents, and custom tooling around them, into the team's workflow to raise output without lowering quality. The team's setup is simpler than Kage. Every project carries its own rules file for the agent. Machine checks run first on every change, and a developer reads what's left: whether it does what was asked, anything touching data or accounts, and any decisions made mid-build.",
   },
-  {
-    title: 'The course I built for the team.',
-    body: {
-      on: "I built and teach an internal web development course at Moveo Creative. It runs over several lessons, including a full module on building with AI. It's there to help the creative team build production front ends with AI: reading and directing AI output, and shipping with judgment. I've taught it live to the whole team.",
-      off: "I built and teach an internal web development course at work. It runs over several lessons, including a full module on building with AI. It's there to help the creative team build production front ends with AI: reading and directing AI output, and shipping with judgment. I've taught it live to the whole team.",
-    },
-  },
 ];
 
 export type Bench = {
