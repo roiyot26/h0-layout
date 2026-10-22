@@ -242,7 +242,7 @@ export const benches: Bench[] = [
 
 export const behindTheScenes = {
   intro:
-    'This site is a portfolio laid out as a 1:87 (H0) model railway: four stations on one loop, one per part of my career. This first version is the plain HTML site. Every page works without JavaScript, and the 3D layout is built on top of it.',
+    'This site is a portfolio laid out as a 1:87 (H0) model railway: four stations on one loop, one per part of my career. This first version is the plain HTML site. Every page works without JavaScript, and the 3D layout will be built on top of it.',
   how: [
     'Every page is static HTML generated from one content file at build time, with Vite and TypeScript and no framework.',
     'Each pull request runs checks before it can merge: links, accessibility, byte budgets, the facts on every page, the CV, and a scan of the public history.',
