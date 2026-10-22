@@ -1,12 +1,12 @@
 [
   {
-    "name": "placeholder JS",
+    "name": "site JS",
     "path": "dist/assets/*.js",
     "limit": "15 KB",
     "gzip": true
   },
   {
-    "name": "placeholder CSS",
+    "name": "site CSS",
     "path": "dist/assets/*.css",
     "limit": "50 KB",
     "gzip": true
@@ -26,9 +26,27 @@
     "brotli": false
   },
   {
+    "name": "Barlow Semi Condensed Medium (latin woff2)",
+    "path": "dist/fonts/barlow-sc-500-sub.woff2",
+    "limit": "19 KB",
+    "gzip": false,
+    "brotli": false
+  },
+  {
     "name": "first-paint fonts",
-    "path": "dist/fonts/*.woff2",
+    "path": [
+      "dist/fonts/plex-mono-500-sub.woff2",
+      "dist/fonts/barlow-sc-600-sub.woff2",
+      "dist/fonts/barlow-sc-500-sub.woff2"
+    ],
     "limit": "50 KB",
+    "gzip": false,
+    "brotli": false
+  },
+  {
+    "name": "Patrick Hand (Kage diagram page only)",
+    "path": "dist/fonts/patrick-hand-sub.woff2",
+    "limit": "15 KB",
     "gzip": false,
     "brotli": false
   },

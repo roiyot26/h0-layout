@@ -1,19 +1,16 @@
 import { test, expect } from '@playwright/test';
-import { routes } from '../scripts/routes.mjs';
+import { pages } from '../scripts/routes.mjs';
 
 // JS on: no page errors or console errors on any route at 1440 and 390, and on the home
-// the obfuscated email assembles into a working address when it's clicked.
-
-// Placeholder switch: delete this constant in the PR that replaces the placeholder home,
-// so the email check becomes unconditional.
-const PLACEHOLDER_TITLE = 'H0 layout · Coming soon';
+// and contact pages the obfuscated email assembles into a working address when it's
+// clicked.
 
 const viewports = [
   { name: '1440', width: 1440, height: 900 },
   { name: '390', width: 390, height: 844 },
 ] as const;
 
-for (const route of routes) {
+for (const route of pages) {
   for (const vp of viewports) {
     test(`smoke: ${route.path} @ ${vp.name} (JS on)`, async ({ page }) => {
       await page.setViewportSize({ width: vp.width, height: vp.height });
@@ -29,9 +26,9 @@ for (const route of routes) {
       expect(response, `no response for ${route.path}`).toBeTruthy();
       expect(response!.status()).toBe(200);
 
-      if (route.path === '/' && (await page.title()) !== PLACEHOLDER_TITLE) {
+      if (route.path === '/' || route.path === '/contact') {
         const email = page.locator('a:text-matches("\\\\[at\\\\].*\\\\[dot\\\\]")');
-        await expect(email, 'no obfuscated email link on the home').not.toHaveCount(0);
+        await expect(email, `no obfuscated email link on ${route.path}`).not.toHaveCount(0);
         await expect(email.first(), 'obfuscated email link not visible').toBeVisible();
         // Hold the element itself: its text changes once the address is assembled.
         const link = (await email.first().elementHandle())!;

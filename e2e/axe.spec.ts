@@ -1,6 +1,6 @@
 import { test, expect } from '@playwright/test';
 import AxeBuilder from '@axe-core/playwright';
-import { routes } from '../scripts/routes.mjs';
+import { pages } from '../scripts/routes.mjs';
 
 // Every route at both checked widths: a violation that only shows on a phone or only
 // on a wide screen must still fail.
@@ -9,7 +9,7 @@ const viewports = [
   { name: '390', width: 390, height: 844 },
 ] as const;
 
-for (const route of routes) {
+for (const route of pages) {
   for (const vp of viewports) {
     test(`axe: ${route.path} @ ${vp.name}`, async ({ page }) => {
       await page.setViewportSize({ width: vp.width, height: vp.height });

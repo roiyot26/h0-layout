@@ -206,6 +206,29 @@ jobs:
           DIST_DIR: ${{ github.workspace }}/dist
           PORT: '4173'
 
+  content:
+    name: content
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with: { node-version: 20, cache: npm }
+      - run: npm ci
+      - name: Build with company names on (default)
+        run: npm run build
+        env:
+          SITE_BASE: /h0-layout/
+      - name: Content checks, companies on
+        run: node scripts/content-check.mjs dist --companies on
+      - name: Build with company names off
+        run: npx vite build
+        env:
+          SITE_BASE: /h0-layout/
+          SHOW_COMPANIES: '0'
+          OUT_DIR: dist-off
+      - name: Content checks, companies off
+        run: node scripts/content-check.mjs dist-off --companies off
+
   cv:
     name: cv
     runs-on: ubuntu-latest
