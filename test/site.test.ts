@@ -99,6 +99,14 @@ describe('content and honesty, both company states', () => {
     }
   });
 
+  it('labels the bootcamp row without repeating the destination', () => {
+    const row = (showCompanies: boolean) =>
+      renderSite(opts({ showCompanies })).get('index.html')!.match(/<tr><td class="c-time">2021<\/td>.*?<\/tr>/)![0];
+    expect(row(true)).toContain('<td class="c-rem">CODING ACADEMY</td>');
+    expect(row(false)).toContain('<td class="c-rem">FULL-STACK COURSE</td>');
+    expect(row(false)).not.toContain('CODING BOOTCAMP');
+  });
+
   it('reads the company flag from the environment, on by default', () => {
     expect(flagsFromEnv({}).showCompanies).toBe(true);
     expect(flagsFromEnv({ SHOW_COMPANIES: '1' }).showCompanies).toBe(true);

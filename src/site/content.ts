@@ -13,7 +13,7 @@ export type Co = { on: string; off: string };
 export type Text = string | Co;
 
 export const employers = {
-  codingAcademy: { name: 'Coding Academy', board: 'CODING BOOTCAMP' },
+  codingAcademy: { name: 'Coding Academy', board: 'FULL-STACK COURSE' },
   misterBit: { name: 'Mister Bit', board: 'DEV + TEACHING' },
   moveo: { name: 'Moveo Creative', board: 'DIGITAL AGENCY' },
 } as const;
