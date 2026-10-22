@@ -196,6 +196,14 @@ describe('email', () => {
     const home = renderSite(opts()).get('index.html')!;
     expect(home).toMatch(/<a class="email" href="\/h0-layout\/contact\/" data-u="[^"]+" data-d="[^"]+" data-t="[^"]+"><span class="visually-hidden">Email<\/span><span aria-hidden="true"><span class="rev">[^<]+<\/span> \[at\] \w+ \[dot\] \w+<\/span><\/a>/);
   });
+
+  it('keeps the space before "[at]" on /contact with a no-break space outside the reversed name', () => {
+    const site = renderSite(opts());
+    expect(site.get('contact/index.html')).toMatch(/<span class="rev">[^<]+<\/span>&nbsp;\[at\] /);
+    expect(site.get('contact/index.html')).not.toMatch(/<span class="rev">[^<]*&nbsp;/);
+    // The home button is unchanged.
+    expect(site.get('index.html')).toMatch(/<span class="rev">[^<]+<\/span> \[at\] /);
+  });
 });
 
 describe('banned words: site pages vs the CV', () => {

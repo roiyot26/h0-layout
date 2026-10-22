@@ -47,16 +47,19 @@ type Ctx = SiteOptions & { u: (path: string) => string; tx: (text: Text) => stri
 const external = (url: string, label: string, extra = '') =>
   `<a href="${esc(url)}" rel="noopener"${extra}>${esc(label)}<span class="ext" aria-hidden="true"> ↗</span></a>`;
 
-function emailLink(c: Ctx, cls = 'email'): string {
+function emailLink(c: Ctx, cls = 'email', keepSpace = false): string {
   // Static HTML carries the parts reversed. With JS off the visible text reads
   // "name [at] domain [dot] tld" (the name is shown reversed back by CSS); the page
   // script rebuilds the real address on focus, pointerdown or click. Until then the
   // link's accessible name is "Email": the reversed parts are hidden from screen
   // readers and a visually hidden "Email" names the link. (An aria-label would fail
   // axe's label-in-name rule, because the visible text isn't part of the name.)
+  // keepSpace puts a no-break space after the reversed name: a plain space right
+  // after the right-to-left span gets lost, so "[at]" ran into the name on /contact.
+  const gap = keepSpace ? '&nbsp;' : ' ';
   return (
     `<a class="${cls}" href="${c.u('/contact')}" data-u="${email.user}" data-d="${email.domain}" data-t="${email.tld}">` +
-    `<span class="visually-hidden">Email</span><span aria-hidden="true"><span class="rev">${email.user}</span> [at] ${[...email.domain].reverse().join('')} [dot] ${[...email.tld].reverse().join('')}</span></a>`
+    `<span class="visually-hidden">Email</span><span aria-hidden="true"><span class="rev">${email.user}</span>${gap}[at] ${[...email.domain].reverse().join('')} [dot] ${[...email.tld].reverse().join('')}</span></a>`
   );
 }
 
@@ -317,7 +320,7 @@ function contact(c: Ctx): string {
   const body = `<article class="sheet">
   <h1>Contact</h1>
   <dl class="contact">
-    <div><dt>Email</dt><dd>${emailLink(c)}</dd></div>
+    <div><dt>Email</dt><dd>${emailLink(c, 'email', true)}</dd></div>
     <div><dt>LinkedIn</dt><dd>${external(links.linkedin, 'linkedin.com/in/roi-yotvat-874ba9209')}</dd></div>
     <div><dt>GitHub</dt><dd>${external(links.github, 'github.com/roiyot26')}</dd></div>
     <div><dt>CV</dt><dd>${cvLink(c, 'Download the CV (PDF)')}</dd></div>

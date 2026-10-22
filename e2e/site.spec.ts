@@ -82,7 +82,7 @@ for (const path of ['/', '/contact']) {
   test(`email fallback on ${path} reads name [at] domain [dot] tld with no mail link`, async ({ page }) => {
     await page.goto(path === '/' ? './' : path.replace(/^\//, ''));
     const a = page.locator('a[data-u]').first();
-    await expect(a.locator('span[aria-hidden="true"]')).toHaveText(/^\S+ \[at\] \S+ \[dot\] \S+$/);
+    await expect(a.locator('span[aria-hidden="true"]')).toHaveText(/^\S+[ \u00a0]\[at\] \S+ \[dot\] \S+$/); // /contact keeps a no-break space before [at]
     await expect(a).toHaveAccessibleName('Email');
     expect(await a.getAttribute('href')).not.toMatch(/^mailto:/i);
     expect(await page.locator('a[href^="mailto:" i]').count()).toBe(0);
