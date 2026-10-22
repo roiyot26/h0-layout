@@ -101,8 +101,8 @@ function layout(c: Ctx, route: Route, body: string, opts: { head?: string; bodyC
   </head>
   <body class="${opts.bodyClass ?? 'page'}">
     <header class="topbar">
-      <a class="corner" href="${c.base}"${current('/')}>Departures</a>
       <a class="corner skip" href="${c.u('/timetable')}"${current('/timetable')}>Skip to the facts</a>
+      <a class="corner" href="${c.base}"${current('/')}>Departures</a>
     </header>
     <main id="main">
 ${body}

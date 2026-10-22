@@ -43,7 +43,8 @@ main { max-width: 1120px; margin: 0 auto; }
 a { color: inherit; }
 :focus-visible { outline: 3px solid var(--signal); outline-offset: 2px; }
 
-/* Corners: Departures top-left, Skip to the facts top-right (fix F11). */
+/* Corners: Skip to the facts top-left and first in the Tab order, Departures
+   top-right (fix F11, M1-03). DOM order matches the visual order. */
 .topbar {
   position: sticky; top: 0; z-index: 2;
   display: flex; justify-content: space-between; gap: 12px;

@@ -98,6 +98,19 @@ test('Skip to the facts is on every page and goes to /timetable', async ({ page 
   }
 });
 
+// M1-03: Skip is the first Tab stop on every page, and sits left of Departures.
+test('the first Tab focuses Skip on every page', async ({ page }) => {
+  for (const route of pages) {
+    await page.goto(route.path === '/' ? './' : route.path.replace(/^\//, ''));
+    await page.keyboard.press('Tab');
+    const focused = await page.evaluate(() => document.activeElement?.className ?? '');
+    expect(focused, route.path).toBe('corner skip');
+    const skip = await page.locator('.topbar .skip').boundingBox();
+    const departures = await page.locator('.topbar .corner:not(.skip)').boundingBox();
+    expect(skip!.x, route.path).toBeLessThan(departures!.x);
+  }
+});
+
 // Design ruling 1 (WCAG 2.4.11): walking back up /timetable with Shift+Tab, no focused
 // link may sit under the sticky top bar.
 for (const vp of [
