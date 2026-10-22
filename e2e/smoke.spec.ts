@@ -121,3 +121,15 @@ test('the first Tab focuses Skip on every route (JS on)', async ({ page }) => {
     expect(focused.text, route.path).toBe(route.path === '/timetable' ? 'Skip to content' : 'Skip to the facts');
   }
 });
+
+// #21: the home CV button gets the same hover cue as the other contact links.
+test('the home CV button changes its border on hover', async ({ page }) => {
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await page.goto('./');
+  const cv = page.locator('.home .contact-links a[download]');
+  const border = () => cv.evaluate((e) => getComputedStyle(e).borderTopColor);
+  const rest = await border();
+  await cv.hover();
+  await expect.poll(border).not.toBe(rest);
+  expect(await border()).toBe('rgb(242, 238, 228)');
+});

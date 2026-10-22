@@ -80,6 +80,7 @@ a { color: inherit; }
 }
 .contact-links a:hover { border-color: var(--ink-light); }
 .home .contact-links a[download] { background: transparent; color: #f2eee4; border-color: var(--signal); }
+.home .contact-links a[download]:hover { border-color: var(--ink-light); }
 .rev { unicode-bidi: bidi-override; direction: rtl; }
 
 /* ---------- Departure board (51 cells: 7 · 11 · 8 · 25) ---------- */
