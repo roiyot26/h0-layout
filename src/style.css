@@ -187,7 +187,7 @@ blockquote { margin: 8px 0; padding-left: 14px; border-left: 3px solid var(--ena
   display: inline-flex; align-items: center; min-height: 44px; padding: 0 14px;
   border: 2px solid var(--enamel); border-radius: 3px; text-decoration: none; font-weight: 600;
 }
-.contact { margin: 12px 0 0; }
+.contact { margin: 12px 0 0; display: grid; row-gap: 8px; }
 .contact div { display: grid; grid-template-columns: 90px 1fr; align-items: center; min-height: 48px; border-top: 1px solid #d9d1c0; }
 .contact dt { color: var(--muted); }
 .contact dd { margin: 0; overflow-wrap: anywhere; }

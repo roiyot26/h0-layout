@@ -136,6 +136,17 @@ for (const [path, selector, count] of [
   });
 }
 
+// M1-08: the /contact links sit at least 8 px apart.
+for (const width of [1440, 390]) {
+  test(`/contact links are at least 8 px apart @ ${width}`, async ({ page }) => {
+    await page.setViewportSize({ width, height: 900 });
+    await page.goto('contact');
+    const boxes = await page.locator('.contact a').evaluateAll((as) => as.map((a) => a.getBoundingClientRect()).map((r) => ({ top: r.top, bottom: r.bottom })));
+    expect(boxes.length).toBeGreaterThan(1);
+    for (let i = 1; i < boxes.length; i++) expect(boxes[i].top - boxes[i - 1].bottom).toBeGreaterThanOrEqual(8);
+  });
+}
+
 // M1-03: Skip is the first Tab stop on every page, and sits left of Departures.
 test('the first Tab focuses Skip on every page', async ({ page }) => {
   for (const route of pages) {
