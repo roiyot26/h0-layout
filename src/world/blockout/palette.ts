@@ -1,7 +1,7 @@
 // STYLE §2 colour tokens used by the grey-box (M2 spec §4.2), and the one material they
 // share. Every set piece carries its tokens as vertex colours on merged geometry, so a
 // piece is one draw however many tokens it uses (see the PR notes on the §4.1 drift).
-import { Color, DoubleSide, MeshLambertMaterial } from 'three';
+import { Color, DoubleSide, FrontSide, MeshLambertMaterial } from 'three';
 
 export const TOKEN = {
   flock: 0x8e8a62,
@@ -42,4 +42,14 @@ let shared: MeshLambertMaterial | null = null;
 /** The grey-box material: Lambert, vertex colours, both sides, fogged. */
 export function blockoutMaterial(): MeshLambertMaterial {
   return (shared ??= new MeshLambertMaterial({ vertexColors: true, side: DoubleSide }));
+}
+
+let front: MeshLambertMaterial | null = null;
+
+/**
+ * The backdrop's material: front faces only, so it reads from the board side and is
+ * see-through from outside the table (the phone overview stands beyond the left end).
+ */
+export function backdropMaterial(): MeshLambertMaterial {
+  return (front ??= new MeshLambertMaterial({ vertexColors: true, side: FrontSide }));
 }

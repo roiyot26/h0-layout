@@ -1,10 +1,11 @@
 // Terrain set piece (M2 spec §4.2): the board top displaced by the height map, the cut
 // edge, the fascia and the painted backdrop with its two coves.
-import { BufferAttribute, BufferGeometry, Color, CylinderGeometry, PlaneGeometry } from 'three';
+import { BufferAttribute, BufferGeometry, Color, CylinderGeometry, Mesh, PlaneGeometry } from 'three';
+import { mergeGeometries } from 'three/examples/jsm/utils/BufferGeometryUtils.js';
 import { HILL, analyticHeight } from '../terrain/heightmap';
 import { LEVEL, TABLE_D, TABLE_W, type Tier, toX, toZ } from '../units';
 import { PieceBuilder, type SetPiece } from './kit';
-import { linear } from './palette';
+import { backdropMaterial, linear } from './palette';
 
 /** The water area gets a finer grid so the river banks and lake shore read. */
 const WATER_AREA = { x0: 1540, x1: 1760, y0: 620, y1: 1200 } as const;
@@ -64,6 +65,24 @@ function boardTop(tier: Tier): BufferGeometry {
   return g;
 }
 
+/** Turn a non-indexed surface inside out: reverse each triangle and its normals. */
+function flipInward(g: BufferGeometry): BufferGeometry {
+  for (const name of ['position', 'normal', 'uv'] as const) {
+    const a = g.getAttribute(name);
+    if (!a) continue;
+    for (let t = 0; t < a.count; t += 3) {
+      for (let k = 0; k < a.itemSize; k++) {
+        const v1 = a.getComponent(t + 1, k);
+        a.setComponent(t + 1, k, a.getComponent(t + 2, k));
+        a.setComponent(t + 2, k, v1);
+      }
+    }
+  }
+  const n = g.getAttribute('normal');
+  for (let i = 0; i < n.count; i++) n.setXYZ(i, -n.getX(i), -n.getY(i), -n.getZ(i));
+  return g;
+}
+
 const mix = (a: Color, b: Color, t: number) => a.clone().lerp(b, t);
 
 /** Backdrop colour at table x and height h: sky gradient with a painted hill band. */
@@ -114,7 +133,7 @@ function backdrop(tier: Tier): BufferGeometry[] {
     const cove = new CylinderGeometry(COVE_R / 1000, COVE_R / 1000, BACKDROP_H / 1000, segs, rows, true, start, Math.PI / 2);
     const cx = side < 0 ? COVE_R : TABLE_W - COVE_R;
     cove.translate(toX(cx), BACKDROP_H / 2000, toZ(TABLE_D - COVE_R));
-    const flat = cove.toNonIndexed();
+    const flat = flipInward(cove.toNonIndexed());
     out.push(colour(flat, (i) => flat.getAttribute('position').getX(i) * 1000 + TABLE_W / 2));
   }
   return out;
@@ -123,7 +142,12 @@ function backdrop(tier: Tier): BufferGeometry[] {
 export function build(tier: Tier): SetPiece {
   const b = new PieceBuilder();
   b.addColoured(boardTop(tier));
-  for (const g of backdrop(tier)) b.addColoured(g);
+  // The backdrop is its own draw, front faces only (see backdropMaterial).
+  const painted = mergeGeometries(backdrop(tier));
+  if (!painted) throw new Error('terrain: could not merge the backdrop');
+  const strip = new Mesh(painted, backdropMaterial());
+  strip.name = 'terrain_backdrop';
+  b.object(strip);
   b.solid('backdrop back', 0, TABLE_W, TABLE_D, TABLE_D, 0, BACKDROP_H);
   b.solid('backdrop left', 0, 0, 0, TABLE_D, 0, BACKDROP_H);
   b.solid('backdrop right', TABLE_W, TABLE_W, 0, TABLE_D, 0, BACKDROP_H);
