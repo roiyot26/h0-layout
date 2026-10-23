@@ -57,7 +57,7 @@ type R = {
   orbitBy(d: { azimuth?: number }): void;
   frame(now: number): void;
 };
-type W = { __h0Trace: { frames: Frame[] }; __h0World: { tier: string; rig: R } };
+type W = { __h0Trace: { frames: Frame[] }; __h0World: { tier: string; rig: R; renderer: { render: (...a: unknown[]) => void } } };
 
 const DEG = Math.PI / 180;
 const fwd = (f: Frame) => ({ x: Math.cos(f.pitch * DEG) * Math.sin(f.yaw * DEG), y: Math.cos(f.pitch * DEG) * Math.cos(f.yaw * DEG), h: Math.sin(f.pitch * DEG) });
@@ -84,18 +84,29 @@ const state = (page: Page) => page.evaluate(() => {
 const mark = (page: Page) => page.evaluate(() => (window as unknown as W).__h0Trace.frames.length);
 const framesSince = (page: Page, from: number) => page.evaluate((n) => (window as unknown as W).__h0Trace.frames.slice(n), from);
 
-/** Steps the rig at 60 Hz without rendering, then brings the page clock to the same time. */
+/**
+ * Steps the rig at 60 Hz without rendering, then brings the page clock to the same time.
+ * rig.frame() draws every step, so the draw is switched off for the loop: a lap is ~4,000
+ * steps, which SwiftShader would otherwise spend minutes drawing. The trace still records.
+ */
 async function advance(page: Page, ms: number, until?: 'ride-over') {
   const ran = await page.evaluate(
     ([ms, until]) => {
       const w = window as unknown as W;
       const f = w.__h0Trace.frames;
       const start = Math.max(performance.now(), f.at(-1)?.t ?? 0);
+      const r = w.__h0World.renderer;
+      const draw = r.render;
+      r.render = () => undefined;
       let t = 0;
-      while (t < (ms as number)) {
-        t += 1000 / 60;
-        w.__h0World.rig.frame(start + t);
-        if (until && !w.__h0World.rig.riding) break;
+      try {
+        while (t < (ms as number)) {
+          t += 1000 / 60;
+          w.__h0World.rig.frame(start + t);
+          if (until && !w.__h0World.rig.riding) break;
+        }
+      } finally {
+        r.render = draw;
       }
       return t;
     },
