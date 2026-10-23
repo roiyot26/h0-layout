@@ -5,6 +5,7 @@
 // fast-forward the page clock to the same time.
 import { mkdirSync, writeFileSync } from 'node:fs';
 import { type Page, expect, test } from '@playwright/test';
+import { drainGpu } from './gpu';
 
 const OUT = process.env.WORLD_OUT;
 const CAP = { tris: 60_000, draws: 40 } as const;
@@ -104,6 +105,8 @@ async function advance(page: Page, ms: number, until?: 'ride-over') {
   await page.clock.runFor(17);
   return ran;
 }
+
+test.afterEach(({ page }) => drainGpu(page));
 
 test.describe('M2-10 ride', () => {
   test.describe.configure({ timeout: 180_000 });

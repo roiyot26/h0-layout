@@ -3,6 +3,7 @@
 // screenshots it on his phone). Here the script runs on Playwright's clock, so the
 // frame times are the virtual 60 Hz ones; the layout checks use a fixed result.
 import { type Page, expect, test } from '@playwright/test';
+import { drainGpu } from './gpu';
 
 const DESKTOP = { width: 1440, height: 900 } as const;
 const PHONE = { width: 390, height: 844 } as const;
@@ -38,6 +39,8 @@ async function open(page: Page, viewport: { width: number; height: number }, que
   await page.clock.runFor(200);
   await page.clock.pauseAt(await page.evaluate(() => Date.now() + 50));
 }
+
+test.afterEach(({ page }) => drainGpu(page));
 
 test.describe('trace card', () => {
   test('&card=1 runs 3 × 20 s of hops and ride, then shows the median; Copy puts the JSON on the clipboard', async ({ page, context }) => {

@@ -4,6 +4,7 @@
 // trace frame per animation frame (?trace=1); the fits use only those frames.
 import { mkdirSync } from 'node:fs';
 import { type Page, expect, test } from '@playwright/test';
+import { drainGpu } from './gpu';
 
 const OUT = process.env.WORLD_OUT;
 const CAP = { tris: 60_000, draws: 40 } as const;
@@ -115,6 +116,8 @@ function phases(frames: Frame[]) {
   const t0 = moving[0]!.t;
   return { moving, after, t0, arrival: after[0]!.t, duration: after[0]!.t - t0 };
 }
+
+test.afterEach(({ page }) => drainGpu(page));
 
 test.describe('F17 curves', () => {
   test('fly, front pair: 1.0 s on cubic-bezier(0.65,0,0.35,1), RMSE ≤ 2%', async ({ page }) => {

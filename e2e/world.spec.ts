@@ -3,6 +3,7 @@
 // recorded as advisory only (§5.4); real-GPU numbers come from the trace card.
 import { mkdirSync, writeFileSync } from 'node:fs';
 import { expect, test } from '@playwright/test';
+import { drainGpu } from './gpu';
 
 const CAP = { tris: 60_000, draws: 40 } as const;
 const VIEWPORTS = [
@@ -15,6 +16,8 @@ interface Frame {
   frameMs: number;
   render: { calls: number; triangles: number };
 }
+
+test.afterEach(({ page }) => drainGpu(page));
 
 for (const vp of VIEWPORTS) {
   test(`overview at ${vp.name} stays under the scene caps`, async ({ page }) => {
