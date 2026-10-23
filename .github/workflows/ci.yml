@@ -67,6 +67,13 @@ jobs:
       - run: npm run build
         env:
           SITE_BASE: /h0-layout/
+      - name: Build the 3D preview into dist-3d (three and world chunks)
+        run: |
+          npx vite build
+        env:
+          SITE_BASE: /h0-layout/
+          FLAGS_FILE: flags.preview.json
+          OUT_DIR: dist-3d
       - name: size-limit
         run: npm run size
       - name: Byte budget
