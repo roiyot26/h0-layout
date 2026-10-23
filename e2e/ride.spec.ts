@@ -5,7 +5,7 @@
 // fast-forward the page clock to the same time.
 import { mkdirSync, writeFileSync } from 'node:fs';
 import { type Page, expect, test } from '@playwright/test';
-import { drainGpu } from './gpu';
+import { drainGpu, setDraw } from './gpu';
 
 const OUT = process.env.WORLD_OUT;
 const CAP = { tris: 60_000, draws: 40 } as const;
@@ -124,6 +124,7 @@ test.describe('M2-10 ride', () => {
 
   test('chase: 0.128 m/s at cruise, 0.35 s spring lag, 50 mm lens, 70 mm above rail, ≤ 45°/s', async ({ page }) => {
     await open(page, SMALL);
+    await setDraw(page, false);
     const n = await mark(page);
     await page.click('.ride-start');
     await page.clock.runFor(12_000);
@@ -152,6 +153,7 @@ test.describe('M2-10 ride', () => {
 
   test('one lap: four 6 s stops, 41.7 ± 1.5 s running, announced arrivals, the cab unlocks, a crossfade home', async ({ page }) => {
     await open(page, SMALL, './workshop/');
+    await setDraw(page, false);
     const len = await page.evaluate(() => history.length);
     const url = page.url();
     await page.evaluate(() => {
@@ -207,6 +209,7 @@ test.describe('M2-10 ride', () => {
   ] as const) {
     test(`${how} ends the ride at ${name} within 100 ms; focus returns to Ride; ✕ is 48 px; no history`, async ({ page }) => {
       await open(page, vp, './teaching/');
+      await setDraw(page, false);
       const len = await page.evaluate(() => history.length);
       const url = page.url();
       await page.click('.ride-start');
@@ -245,6 +248,7 @@ test.describe('M2-10 ride', () => {
 
   test('cab: hidden until unlocked; 28 mm lens, 33 mm above rail, 3° down; drag yaws ±25°', async ({ page }) => {
     await open(page, SMALL);
+    await setDraw(page, false);
     await page.click('.ride-start');
     await page.clock.runFor(1000);
     expect(await page.locator('.ride-cab').isHidden()).toBe(true);
@@ -274,6 +278,7 @@ test.describe('M2-10 ride', () => {
 
   test('Back during a ride ends it and hops back', async ({ page }) => {
     await open(page, SMALL);
+    await setDraw(page, false);
     await page.evaluate(() => (window as unknown as W).__h0World.rig.go('city'));
     await page.clock.runFor(800);
     await page.click('.ride-start');
@@ -285,6 +290,7 @@ test.describe('M2-10 ride', () => {
 
   test('the tier swap mid-ride crossfades onto the phone chase and keeps riding', async ({ page }) => {
     await open(page, SMALL);
+    await setDraw(page, false);
     await page.click('.ride-start');
     await page.clock.runFor(2000);
     const n = await mark(page);
@@ -307,6 +313,7 @@ test.describe('M2-10 ride', () => {
 test.describe('M2-13 ride, reduced motion', () => {
   test('the train stays parked; station views come on input, each a 200 ms crossfade; no history', async ({ page }) => {
     await open(page, SMALL, './', true);
+    await setDraw(page, false);
     const len = await page.evaluate(() => history.length);
     let n = await mark(page);
     await page.click('.ride-start');
