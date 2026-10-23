@@ -100,12 +100,17 @@ const rig = <T>(page: Page, fn: (r: W['__h0World']['rig'], w: W) => T) =>
 async function hop(page: Page, to: string, extra = 400): Promise<Frame[]> {
   const n = await mark(page);
   await page.evaluate((d) => (window as unknown as W).__h0World.rig.go(d), to);
+  await settle(page, extra);
+  return framesSince(page, n);
+}
+
+/** Steps until the rig is idle, then `extra` ms more. */
+async function settle(page: Page, extra: number) {
   for (let i = 0; i < 200; i++) {
     await page.clock.runFor(100);
     if ((await page.evaluate(() => (window as unknown as W).__h0World.rig.mode)) === 'idle') break;
   }
   await page.clock.runFor(extra);
-  return framesSince(page, n);
 }
 
 /** Splits hop frames into the transition and the frames after arrival. */
@@ -375,19 +380,47 @@ test.describe('scene counts at every pose', () => {
     test(`overview and the four stations at ${name} stay under the caps`, async ({ page }) => {
       await open(page, vp);
       const rows: string[] = [];
+      const fades: string[] = [];
+      const peak = { tris: 0, draws: 0 };
+      // Every hop here is a crossfade. Halfway through it (150 of 300 ms), with drawing on,
+      // the frame is the view behind the overlay plus the overlay's own draw.
+      const midFade = async (to: string) => {
+        const from = await rig(page, (r) => r.dest);
+        await setDraw(page, true);
+        const n = await mark(page);
+        await page.evaluate((d) => (window as unknown as W).__h0World.rig.go(d), to);
+        await page.clock.runFor(150);
+        const f = (await framesSince(page, n)).at(-1)!;
+        expect(f.mode).toBe('fade');
+        expect(f.opacityA).toBeGreaterThan(0);
+        expect(f.opacityA).toBeLessThan(1);
+        expect(f.render.triangles).toBeLessThanOrEqual(CAP.tris);
+        expect(f.render.calls).toBeLessThanOrEqual(CAP.draws);
+        fades.push(`${from}→${to} ${f.render.triangles}/${f.render.calls}`);
+        peak.tris = Math.max(peak.tris, f.render.triangles);
+        peak.draws = Math.max(peak.draws, f.render.calls);
+        await setDraw(page, false);
+      };
       for (const d of ['overview', ...STATIONS]) {
         // Hops step with drawing off; two drawn frames at the pose then fill the counters.
         await setDraw(page, false);
-        if (d !== 'overview') await hop(page, d, 300);
+        if (d !== 'overview') {
+          await midFade(d);
+          await settle(page, 300);
+        }
         await setDraw(page, true);
         await page.clock.runFor(34);
         const last = (await framesSince(page, (await mark(page)) - 1))[0]!;
         expect(last.render.triangles).toBeLessThanOrEqual(CAP.tris);
         expect(last.render.calls).toBeLessThanOrEqual(CAP.draws);
         rows.push(`${d} ${last.render.triangles}/${last.render.calls}`);
-        if (d !== 'overview') await hop(page, 'overview', 100);
+        if (d !== 'overview') {
+          await midFade('overview');
+          await settle(page, 100);
+        }
       }
       console.log(`[world] ${name} tris/draws: ${rows.join(', ')}`);
+      console.log(`[world] ${name} mid-crossfade tris/draws: ${fades.join(', ')}; peak ${peak.tris}/${peak.draws}`);
     });
   }
 });
