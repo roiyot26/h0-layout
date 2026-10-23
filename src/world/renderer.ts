@@ -11,7 +11,8 @@ import {
   WebGLRenderer,
 } from 'three';
 import { buildBlockout, type SetPiece } from './blockout';
-import { OVERVIEW, type Pose, fovFor, pixelRatioFor, tierFor } from './camera/poses';
+import { OVERVIEW, fovFor, pixelRatioFor, tierFor } from './camera/poses';
+import type { Aabb } from './terrain/clearance';
 import { type Tier, toThree } from './units';
 
 export const SUN = { direction: [-0.912, 0.242, 0.332] as const, colour: 0xffc99d } as const;
@@ -29,8 +30,14 @@ export interface World {
   camera: PerspectiveCamera;
   tier: Tier;
   pieces: SetPiece[];
+  /** Every set piece's clearance boxes (§3.4) for the current tier. */
+  boxes: Aabb[];
+  /** Canvas size in CSS px. */
+  width: number;
+  height: number;
   draw(): void;
-  resize(): void;
+  /** Fits the drawing buffer to the container. Returns true when the tier changed (the blockout is rebuilt). */
+  resize(): boolean;
   dispose(): void;
 }
 
@@ -44,25 +51,20 @@ function lights(scene: Scene): void {
   scene.add(sky);
 }
 
-function applyPose(camera: PerspectiveCamera, pose: Pose, tier: Tier, aspect: number): void {
-  camera.position.set(...toThree(pose.position));
-  camera.near = pose.near;
-  camera.far = pose.far;
-  camera.aspect = aspect;
-  camera.fov = fovFor(pose, tier, aspect, 'overview');
-  camera.lookAt(...toThree(pose.target));
-  camera.updateProjectionMatrix();
-}
-
-/** Build the scene for a tier. `forceTier` pins it (tests); otherwise the viewport picks. */
+/**
+ * Build the scene for a tier, with the canvas filling `container` (the layout region).
+ * The tier still follows the window (§1.1). `forceTier` pins it (tests). The camera
+ * starts at the tier's overview; the rig drives it from then on.
+ */
 export function createWorld(container: HTMLElement, forceTier?: Tier): World {
   const renderer = new WebGLRenderer({ antialias: true, powerPreference: 'high-performance' });
   renderer.setPixelRatio(pixelRatioFor(window.devicePixelRatio));
+  renderer.info.autoReset = false;
   const canvas = renderer.domElement;
   canvas.className = 'world';
   canvas.setAttribute('aria-hidden', 'true');
-  canvas.style.cssText = 'position:fixed;inset:0;width:100%;height:100%;display:block;z-index:10;pointer-events:none';
-  container.append(canvas);
+  canvas.tabIndex = -1;
+  container.prepend(canvas);
 
   const scene = new Scene();
   scene.background = new Color(FOG.colour);
@@ -73,6 +75,9 @@ export function createWorld(container: HTMLElement, forceTier?: Tier): World {
   const pick = () => forceTier ?? tierFor(window.innerWidth, window.innerHeight);
   let tier = pick();
   let pieces = buildBlockout(scene, tier);
+  let boxes = pieces.flatMap((p) => p.aabbs);
+  let width = 0;
+  let height = 0;
 
   const world: World = {
     renderer,
@@ -84,27 +89,43 @@ export function createWorld(container: HTMLElement, forceTier?: Tier): World {
     get pieces() {
       return pieces;
     },
+    get boxes() {
+      return boxes;
+    },
+    get width() {
+      return width;
+    },
+    get height() {
+      return height;
+    },
     draw: () => renderer.render(scene, camera),
     resize() {
-      const w = window.innerWidth;
-      const h = window.innerHeight;
+      width = Math.max(1, container.clientWidth);
+      height = Math.max(1, container.clientHeight);
       const next = pick();
-      if (next !== tier) {
+      const changed = next !== tier;
+      if (changed) {
         for (const p of pieces) scene.remove(p.group);
         tier = next;
         pieces = buildBlockout(scene, tier);
+        boxes = pieces.flatMap((p) => p.aabbs);
       }
-      renderer.setSize(w, h, false);
-      applyPose(camera, OVERVIEW[tier], tier, w / h);
-      world.draw();
+      renderer.setSize(width, height, false);
+      return changed;
     },
     dispose() {
-      window.removeEventListener('resize', world.resize);
       renderer.dispose();
       canvas.remove();
     },
   };
-  window.addEventListener('resize', world.resize);
   world.resize();
+  const o = OVERVIEW[tier];
+  camera.position.set(...toThree(o.position));
+  camera.aspect = width / height;
+  camera.fov = fovFor(o, tier, camera.aspect, 'overview');
+  camera.near = o.near;
+  camera.far = o.far;
+  camera.lookAt(...toThree(o.target));
+  camera.updateProjectionMatrix();
   return world;
 }
