@@ -103,7 +103,6 @@ export const stations: Station[] = [
         on: 'I taught full-stack courses at Coding Academy to cycles of 60–70 students: JavaScript, React, Node.js, Express and MongoDB. Alongside teaching, I also worked on company projects.',
         off: 'I taught full-stack bootcamp courses to cycles of 60–70 students: JavaScript, React, Node.js, Express and MongoDB. Alongside teaching, I also worked on company projects.',
       },
-      "Teaching is where I learned to read other people's code quickly and explain what's wrong with it without making anyone feel stupid.",
     ],
   },
   {
