@@ -41,7 +41,7 @@ export default defineConfig({
       // Run against the 3D preview build (DIST_DIR=dist-3d). SwiftShader stands in for
       // a GPU on the box and in CI, so frame times here are advisory only.
       name: 'world',
-      testMatch: /(world|rig)\.spec\.ts/,
+      testMatch: /(world|rig|ride)\.spec\.ts/,
       timeout: 60_000,
       use: {
         javaScriptEnabled: true,
