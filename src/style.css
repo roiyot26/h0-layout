@@ -65,6 +65,7 @@ a { color: inherit; }
   color: var(--ink-light); border: 2px solid var(--dim); border-radius: 3px;
 }
 .topbar .corner.skip { order: 1; min-height: 48px; } /* STYLE §11: Skip is 48 px tall */
+.topbar .corner.departures { min-height: 48px; } /* STYLE §11: corners are 48 px; was implicit via align-items: stretch */
 .corner:hover { border-color: var(--ink-light); }
 .corner[aria-current='page'] { border-color: var(--signal); }
 

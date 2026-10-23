@@ -115,7 +115,7 @@ function layout(c: Ctx, route: Route, body: string, opts: { head?: string; bodyC
           ? '<a class="corner skip" href="#main">Skip to content</a>'
           : `<a class="corner skip" href="${c.u('/timetable')}">Skip to the facts</a>`
       }
-      <a class="corner" href="${c.base}"${current('/')}>Departures</a>
+      <a class="corner departures" href="${c.base}"${current('/')}>Departures</a>
     </header>
     <main id="main" tabindex="-1">
 ${body}

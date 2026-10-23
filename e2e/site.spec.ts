@@ -239,3 +239,19 @@ for (const vp of [
     expect(low, low.join(' | ')).toEqual([]);
   });
 }
+
+// M2 backlog 4 (C9): Departures is a 48 px corner like Skip, and they share a top.
+for (const vp of [
+  { width: 1440, height: 900 },
+  { width: 390, height: 844 },
+  { width: 360, height: 780 },
+]) {
+  test(`Departures is 48 px and level with Skip @ ${vp.width}`, async ({ page }) => {
+    await page.setViewportSize(vp);
+    await page.goto('./');
+    const departures = await page.locator('.topbar .corner.departures').boundingBox();
+    const skip = await page.locator('.topbar .corner.skip').boundingBox();
+    expect(Math.abs(departures!.height - 48)).toBeLessThanOrEqual(0.5);
+    expect(Math.abs(departures!.y - skip!.y)).toBeLessThanOrEqual(0.5);
+  });
+}
