@@ -58,7 +58,7 @@ export interface Rig {
   readonly cabUnlocked: boolean;
   /** Starts a hop (ending a ride first); while one runs, the last request wins and runs on arrival. */
   go(to: Dest, opts?: { push?: boolean }): void;
-  /** Starts the ride from where the camera is (idle only). */
+  /** Starts the ride from where the camera is; pressed mid-hop, it boards when the hop lands. */
   ride(): void;
   /** Ends the ride with a crossfade back to the view it started from. */
   endRide(): void;
