@@ -3,7 +3,7 @@
 // screenshots it on his phone). Here the script runs on Playwright's clock, so the
 // frame times are the virtual 60 Hz ones; the layout checks use a fixed result.
 import { type Page, expect, test } from '@playwright/test';
-import { drainGpu } from './gpu';
+import { drainGpu, setDraw } from './gpu';
 
 const DESKTOP = { width: 1440, height: 900 } as const;
 const PHONE = { width: 390, height: 844 } as const;
@@ -47,6 +47,7 @@ test.describe('trace card', () => {
     test.setTimeout(400_000);
     await context.grantPermissions(['clipboard-read', 'clipboard-write']);
     await open(page, PHONE, '&card=1');
+    await setDraw(page, false);
     await expect(page.locator('.trace-status')).toContainText(/Measuring the preview · \d+ s left/);
     const seen = new Set<string>();
     let rode = false;
