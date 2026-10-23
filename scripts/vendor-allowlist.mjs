@@ -13,6 +13,7 @@
 // findings and update THREE_VERSION and VENDOR_FINDINGS together. An unlisted finding
 // fails both guards, so a stale list fails closed.
 import { createHash } from 'node:crypto';
+import { relative, resolve } from 'node:path';
 
 export const THREE_VERSION = '0.186.1';
 
@@ -20,9 +21,17 @@ export const THREE_VERSION = '0.186.1';
 // opening PR backlog 1).
 export const VENDOR_CHUNK = /^assets\/three-[A-Za-z0-9_-]{8}\.js$/;
 
-/** True when a built file's path ends in assets/three-<8>.js (any dist directory). */
-export const isVendorChunk = (path) =>
-  VENDOR_CHUNK.test(path.replace(/\\/g, '/').split('/').slice(-2).join('/'));
+// The same chunk as a path from the repo root: assets/three-<8>.js directly inside a
+// top-level dist or dist-<name> directory, as dist-guard reads it relative to DIST_DIR.
+export const VENDOR_BUILT_PATH = new RegExp(`^dist(?:-[^/]+)?/${VENDOR_CHUNK.source.slice(1)}`);
+
+/**
+ * True only for the top-level dist*\/assets/three-<8>.js, with `path` taken relative to
+ * `cwd` (the repo root when the guards run). A nested copy such as x/assets/three-<8>.js
+ * or x/dist/assets/three-<8>.js is not the vendor chunk and gets no blanking.
+ */
+export const isVendorChunk = (path, cwd = process.cwd()) =>
+  VENDOR_BUILT_PATH.test(relative(cwd, resolve(cwd, path)).replace(/\\/g, '/'));
 
 /**
  * @typedef {{ rule: 'phone' | 'email', sha256: string, length: number, before: string,

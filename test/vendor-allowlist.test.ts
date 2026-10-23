@@ -33,9 +33,10 @@ beforeAll(() => {
 }, 120_000);
 afterAll(() => rmSync(work, { recursive: true, force: true }));
 
-function run(cmd: string, args: string[], env: Record<string, string> = {}) {
+function run(cmd: string, args: string[], env: Record<string, string> = {}, cwd = root) {
   try {
     const out = execFileSync(process.execPath, [cmd, ...args], {
+      cwd,
       env: { ...process.env, ...env },
       stdio: ['ignore', 'pipe', 'pipe'],
     });
@@ -46,13 +47,25 @@ function run(cmd: string, args: string[], env: Record<string, string> = {}) {
   }
 }
 
-/** A dist holding only the vendor chunk, with `text` as its contents; both guards run on it. */
+/**
+ * A dist holding only the vendor chunk, with `text` as its contents; both guards run on
+ * it. The history check runs from `work`, so the chunk sits at the top-level
+ * dist-<name>/assets/three-<8>.js, as in a repo checkout.
+ */
 function guards(text: string) {
   const dist = mkdtempSync(join(work, 'dist-'));
   const file = join(dist, 'assets', chunkName);
   mkdirSync(dirname(file), { recursive: true });
   writeFileSync(file, text);
-  return { guard: run(guard, [], { DIST_DIR: dist }), history: run(history, ['--text', file]) };
+  return { guard: run(guard, [], { DIST_DIR: dist }), history: run(history, ['--text', file], {}, work) };
+}
+
+/** The history check on `text` written to `rel` under `work`, run from `work`. */
+function historyAt(rel: string, text: string) {
+  const file = join(work, rel);
+  mkdirSync(dirname(file), { recursive: true });
+  writeFileSync(file, text);
+  return run(history, ['--text', rel], {}, work);
 }
 
 const sha = (s: string) => createHash('sha256').update(s).digest('hex');
@@ -75,8 +88,16 @@ describe('the shared three.js allowlist', () => {
 
   it('matches only assets/three-<8>.js', () => {
     expect(VENDOR_CHUNK.test('assets/three-AbCd_-12.js')).toBe(true);
-    expect(isVendorChunk('/tmp/x/dist-3d/assets/three-AbCd1234.js')).toBe(true);
+    expect(isVendorChunk('dist/assets/three-AbCd1234.js')).toBe(true);
+    expect(isVendorChunk('dist-3d/assets/three-AbCd1234.js')).toBe(true);
+    expect(isVendorChunk('/tmp/x/dist-3d/assets/three-AbCd1234.js', '/tmp/x')).toBe(true);
     for (const p of [
+      'x/assets/three-AbCd1234.js',
+      'x/dist/assets/three-AbCd1234.js',
+      'dist/x/assets/three-AbCd1234.js',
+      'assets/three-AbCd1234.js',
+      'distx/assets/three-AbCd1234.js',
+      '/tmp/x/dist-3d/assets/three-AbCd1234.js',
       'dist/assets/three-AbCd123.js',
       'dist/assets/three-AbCd12345.js',
       'dist/assets/three-AbCd1234.js.map',
@@ -131,6 +152,21 @@ describe('the shared three.js allowlist', () => {
     const r = guards(chunk.replace('export{', `const __planted=${f.before}${hit};export{`));
     expect(r.guard.code).toBe(1);
     expect(r.history.code).toBe(1);
+  });
+
+  it('blanks only the top-level dist*/assets/three-<8>.js, not a nested copy', () => {
+    const top = historyAt(`dist-top/assets/${chunkName}`, chunk);
+    expect(top.code, top.out).toBe(0);
+    expect(top.out).toContain('listed three.js finding(s) blanked');
+    for (const rel of [`x/assets/${chunkName}`, `x/dist/assets/${chunkName}`]) {
+      // The listed findings are not blanked there, so the clean chunk fails...
+      const listed = historyAt(rel, chunk);
+      expect(listed.code, rel).toBe(1);
+      expect(listed.out).not.toContain('blanked');
+      expect(listed.out).toContain(': phone number pattern');
+      // ...and so does a planted one.
+      expect(historyAt(rel, plant(phone)).code, rel).toBe(1);
+    }
   });
 
   it('does not blank a listed string outside the vendor chunk', () => {

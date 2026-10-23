@@ -6,7 +6,7 @@ export const TABLE_W = 2400;
 export const TABLE_D = 1200;
 
 /** Rendering tier. Phone poses and lighter meshes apply on the phone tier (§1.1). */
-export type Tier = 'desktop' | 'phone';
+export type { Tier } from '../tier';
 
 /** Datum heights in mm (§0 levels table). */
 export const LEVEL = {

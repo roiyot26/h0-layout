@@ -80,9 +80,15 @@ jobs:
         run: npm run budget
 
   world:
-    name: world
+    # Two shards, each with its own 30 min budget; SwiftShader draws every frame on the CPU.
+    # The overview counts (world.spec) run in the last shard.
+    name: world (${{ matrix.shard }}/2)
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: [1, 2]
     steps:
       - uses: actions/checkout@v5
       - uses: actions/setup-node@v5
@@ -107,18 +113,32 @@ jobs:
         run: npx playwright install chromium --with-deps
       - name: Scene caps at the overview (1440 and 390, SwiftShader)
         working-directory: e2e
-        run: npm run world
+        run: npm run world -- --shard=${{ matrix.shard }}/2
         env:
           CI: 'true'
           SITE_BASE: /h0-layout/
           DIST_DIR: ${{ github.workspace }}/dist-3d
           PORT: '4173'
           WORLD_OUT: ${{ github.workspace }}/world-out
+      - name: Print the scene counts per viewport
+        if: always()
+        run: |
+          node -e '
+            const fs = require("fs");
+            const dir = "world-out";
+            const files = fs.existsSync(dir) ? fs.readdirSync(dir).filter((f) => /^world-.*\.json$/.test(f)).sort() : [];
+            if (!files.length) { console.log("no scene counts were written"); process.exit(0); }
+            const rows = files.map((f) => JSON.parse(fs.readFileSync(`${dir}/${f}`, "utf8")));
+            const lines = ["| viewport | tier | triangles | draw calls |", "|---|---|---|---|",
+              ...rows.map((r) => `| ${r.viewport} | ${r.tier} | ${r.triangles} | ${r.calls} |`)];
+            for (const r of rows) console.log(`${r.viewport} ${r.tier}: ${r.triangles} triangles, ${r.calls} draw calls`);
+            if (process.env.GITHUB_STEP_SUMMARY) fs.appendFileSync(process.env.GITHUB_STEP_SUMMARY, `### Scene counts\n\n${lines.join("\n")}\n`);
+          '
       - name: Upload the overview shots and counts
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: world-overview
+          name: world-overview-${{ matrix.shard }}
           path: world-out/
           if-no-files-found: ignore
 
