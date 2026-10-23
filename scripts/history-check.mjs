@@ -36,11 +36,12 @@
 // file). Patterns are "*.ext" suffix matches only. This is a rule about where a
 // term may appear, not a list of allowed words.
 //
-// Vendor chunk: in --text mode only, a built file whose last two path parts match
-// assets/three-<8-char hash>.js has the known three.js findings listed in
-// scripts/vendor-allowlist.mjs blanked before the phone scan (dist-guard uses the same
-// list). Every rule still runs on the rest of the file, banned terms run on all of it,
-// and nothing is blanked for any other name or in --all / --pre-push.
+// Vendor chunk: in --text mode only, the file at dist/assets/three-<8-char hash>.js
+// or dist-<name>/assets/three-<8>.js, relative to the working directory (the repo
+// root), has the known three.js findings listed in scripts/vendor-allowlist.mjs
+// blanked before the phone scan (dist-guard uses the same list and pattern). Every rule still runs on the rest of the file, banned terms run on all of it,
+// and nothing is blanked for any other name or path (a nested x/assets/three-<8>.js
+// included) or in --all / --pre-push.
 
 import { execFileSync } from 'node:child_process';
 import { createHash } from 'node:crypto';
