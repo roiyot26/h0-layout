@@ -80,9 +80,15 @@ jobs:
         run: npm run budget
 
   world:
-    name: world
+    # Two shards, each with its own 30 min budget; SwiftShader draws every frame on the CPU.
+    # The overview counts (world.spec) run in the last shard.
+    name: world (${{ matrix.shard }}/2)
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: [1, 2]
     steps:
       - uses: actions/checkout@v5
       - uses: actions/setup-node@v5
@@ -107,7 +113,7 @@ jobs:
         run: npx playwright install chromium --with-deps
       - name: Scene caps at the overview (1440 and 390, SwiftShader)
         working-directory: e2e
-        run: npm run world
+        run: npm run world -- --shard=${{ matrix.shard }}/2
         env:
           CI: 'true'
           SITE_BASE: /h0-layout/
@@ -132,7 +138,7 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: world-overview
+          name: world-overview-${{ matrix.shard }}
           path: world-out/
           if-no-files-found: ignore
 
