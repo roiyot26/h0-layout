@@ -1,7 +1,8 @@
 // Input (M2 spec §1.2, STYLE §5 and §11, CHECKLIST B7/B8): one-finger or mouse drag
 // orbits (after an 8 px threshold), pinch and Ctrl-wheel dolly, a plain wheel scrolls
 // the page, the arrow keys walk the story order inside the layout region, the switcher
-// and station labels hop. Only the canvas takes touch-action: none.
+// and station labels hop, and the ride controls ride (Esc ends a ride from anywhere).
+// Only the canvas takes touch-action: none.
 import { type Dest, step } from './camera/views';
 import type { Region } from './layout';
 import type { Rig } from './rig';
@@ -71,6 +72,11 @@ export function wireInput(region: Region, canvas: HTMLCanvasElement, rig: Rig): 
     if (e.altKey || e.ctrlKey || e.metaKey || e.shiftKey) return;
     if (e.key !== 'ArrowRight' && e.key !== 'ArrowLeft') return;
     e.preventDefault();
+    if (rig.riding) {
+      // In a ride the arrows walk the station views under reduced motion, and do nothing else.
+      if (rig.riding === 'stations') rig.nextStation(e.key === 'ArrowRight' ? 1 : -1);
+      return;
+    }
     const next = step(rig.mode === 'idle' ? rig.dest : rig.to, e.key === 'ArrowRight' ? 1 : -1);
     hop(next);
     // Roving focus follows the switcher's current button.
@@ -78,6 +84,19 @@ export function wireInput(region: Region, canvas: HTMLCanvasElement, rig: Rig): 
     if (active instanceof HTMLButtonElement && active.parentElement?.classList.contains('switcher')) region.switcher.get(next)?.focus();
   });
   for (const [d, b] of region.switcher) on(b, 'click', () => hop(d));
+  const ride = region.ride;
+  on(ride.start, 'click', () => rig.ride());
+  on(ride.exit, 'click', () => rig.endRide());
+  on(ride.next, 'click', () => rig.nextStation());
+  on(ride.cab, 'click', () => rig.rideCam(rig.riding === 'cab' ? 'chase' : 'cab'));
+  // Esc ends the ride from anywhere on the page, the moment it is pressed.
+  const esc = (e: KeyboardEvent) => {
+    if (e.key !== 'Escape' || !rig.riding) return;
+    e.preventDefault();
+    rig.endRide();
+  };
+  document.addEventListener('keydown', esc);
+  off.push(() => document.removeEventListener('keydown', esc));
   for (const [id, b] of region.labels) on(b, 'click', () => hop(id));
 
   return () => {
