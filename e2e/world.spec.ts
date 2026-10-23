@@ -53,6 +53,8 @@ for (const vp of VIEWPORTS) {
       p95Ms: Number(pick(0.95).toFixed(2)),
     };
     test.info().annotations.push({ type: 'world', description: JSON.stringify(summary) });
+    // One line per viewport in the job log, so the counts read without the artifact.
+    console.log(`[world] ${vp.name} (${summary.viewport}, ${summary.tier}) overview: ${summary.triangles} triangles, ${summary.calls} draw calls (caps ${CAP.tris} / ${CAP.draws})`);
     if (summary.p95Ms > 33.4) console.warn(`[advisory] SwiftShader p95 ${summary.p95Ms} ms at ${vp.name}`);
     if (OUT) {
       mkdirSync(OUT, { recursive: true });
