@@ -362,7 +362,8 @@ test.describe('ride counts', () => {
       for (let k = 0; k < 16; k++) {
         for (const cam of ['chase', 'cab'] as const) {
           await page.evaluate((c) => (window as unknown as W).__h0World.rig.rideCam(c), cam);
-          await page.clock.runFor(350);
+          // Step past the camera switch, then sample the one frame advance() renders.
+          await advance(page, 350);
           const last = (await framesSince(page, (await mark(page)) - 1))[0]!;
           expect(last.mode).toBe('ride');
           peak[cam].tris = Math.max(peak[cam].tris, last.render.triangles);
