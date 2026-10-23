@@ -35,3 +35,26 @@ export async function drainGpu(page: Page, testInfo: TestInfo): Promise<void> {
   console.log(`[drain] ${name} ${ms} ms`);
   if (how === 'cap') throw new Error(`[drain] ${name}: the GPU was still drawing this test's frames after ${ms} ms (cap ${DRAIN_CAP_MS} ms)`);
 }
+
+type Drawable = { __h0World?: { renderer: { render: (...a: unknown[]) => void } }; __h0Draw?: (...a: unknown[]) => void };
+
+/**
+ * Switches the world's draw calls off (or back on) for a test whose checks read only the
+ * trace: the rig still steps every frame and the trace still records poses, opacities,
+ * labels and DOF, but SwiftShader draws nothing, so no backlog builds up. The render
+ * counters in the trace read zero while drawing is off, so tests that check counts,
+ * luminance or pixels keep drawing.
+ */
+export async function setDraw(page: Page, on: boolean): Promise<void> {
+  await page.evaluate((on) => {
+    const w = window as unknown as Drawable;
+    const r = w.__h0World!.renderer;
+    if (!on && !w.__h0Draw) {
+      w.__h0Draw = r.render;
+      r.render = () => undefined;
+    } else if (on && w.__h0Draw) {
+      r.render = w.__h0Draw;
+      w.__h0Draw = undefined;
+    }
+  }, on);
+}

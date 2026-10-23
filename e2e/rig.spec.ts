@@ -4,7 +4,7 @@
 // trace frame per animation frame (?trace=1); the fits use only those frames.
 import { mkdirSync } from 'node:fs';
 import { type Page, expect, test } from '@playwright/test';
-import { drainGpu } from './gpu';
+import { drainGpu, setDraw } from './gpu';
 
 const OUT = process.env.WORLD_OUT;
 const CAP = { tris: 60_000, draws: 40 } as const;
@@ -122,6 +122,7 @@ test.afterEach(({ page }, testInfo) => drainGpu(page, testInfo));
 test.describe('F17 curves', () => {
   test('fly, front pair: 1.0 s on cubic-bezier(0.65,0,0.35,1), RMSE ≤ 2%', async ({ page }) => {
     await open(page, DESKTOP, './bootcamp/');
+    await setDraw(page, false);
     const f = await hop(page, 'workshop');
     const { moving, after, t0, duration } = phases(f);
     expect(duration).toBeGreaterThanOrEqual(950);
@@ -136,6 +137,7 @@ test.describe('F17 curves', () => {
 
   test('fly, back pair: arc-length progress on the curve, RMSE ≤ 2%', async ({ page }) => {
     await open(page, DESKTOP, './teaching/');
+    await setDraw(page, false);
     const f = await hop(page, 'city');
     const { moving, after, t0, duration } = phases(f);
     expect(Math.abs(duration - 1000)).toBeLessThanOrEqual(50);
@@ -149,6 +151,7 @@ test.describe('F17 curves', () => {
 
   test('crossfade: linear opacity over 300 ± 30 ms; labels ease-out 150 ± 20 ms; DOF 250 ± 30 ms', async ({ page }) => {
     await open(page, DESKTOP);
+    await setDraw(page, false);
     const f = await hop(page, 'bootcamp');
     const { moving, after, t0, arrival, duration } = phases(f);
     expect(Math.abs(duration - 300)).toBeLessThanOrEqual(30);
@@ -167,6 +170,7 @@ test.describe('F17 curves', () => {
 
   test('reduced motion: every hop is a 200 ± 20 ms crossfade with no translation', async ({ page }) => {
     await open(page, DESKTOP, './bootcamp/', true);
+    await setDraw(page, false);
     for (const to of ['workshop', 'overview', 'city'] as const) {
       const f = await hop(page, to);
       const { moving, t0, duration } = phases(f);
@@ -201,6 +205,7 @@ test.describe('F20 (b): orbited starts', () => {
       // A smaller desktop-tier viewport (same 1.6 aspect, so the same FOV): the checks are
       // pose maths, and SwiftShader renders it faster.
       await open(page, { width: 960, height: 600 }, `./${PATHS[from]}/`);
+      await setDraw(page, false);
       const to = from === 'campus' ? 'city' : 'campus';
       const boxes = await page.evaluate(() => (window as unknown as W).__h0World.boxes);
       const clear = (p: P) =>
@@ -252,6 +257,7 @@ test.describe('F20 (b): orbited starts', () => {
 test.describe('history, deep links, tier swap', () => {
   test('every hop pushes its page, the overview included; orbit does not; Back hops', async ({ page }) => {
     await open(page, DESKTOP);
+    await setDraw(page, false);
     const len = await page.evaluate(() => history.length);
     const back = async (to: string) => {
       await page.evaluate(() => history.back());
@@ -338,6 +344,7 @@ test.describe('input and layout', () => {
 
   test('a plain wheel scrolls the page; drag orbits past 8 px; arrows and the switcher hop', async ({ page }) => {
     await open(page, DESKTOP);
+    await setDraw(page, false);
     await page.mouse.move(720, 450);
     await page.mouse.wheel(0, 400);
     await expect.poll(() => page.evaluate(() => scrollY)).toBeGreaterThan(0);
@@ -369,7 +376,11 @@ test.describe('scene counts at every pose', () => {
       await open(page, vp);
       const rows: string[] = [];
       for (const d of ['overview', ...STATIONS]) {
+        // Hops step with drawing off; two drawn frames at the pose then fill the counters.
+        await setDraw(page, false);
         if (d !== 'overview') await hop(page, d, 300);
+        await setDraw(page, true);
+        await page.clock.runFor(34);
         const last = (await framesSince(page, (await mark(page)) - 1))[0]!;
         expect(last.render.triangles).toBeLessThanOrEqual(CAP.tris);
         expect(last.render.calls).toBeLessThanOrEqual(CAP.draws);
