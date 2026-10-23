@@ -110,6 +110,20 @@ describe('ride cameras', () => {
       expect(chaseUp(100, tier)).toBe(CHASE[tier].up);
     });
 
+    it(`${tier}: the whole train stays inside a 390-portrait frame, ≤ 9° off the chase axis`, () => {
+      // 390×844 at 37.8° vFOV is 9.0° each side of the axis; the 1440 frame is 21°.
+      let worst = 0;
+      for (const f of run) {
+        const v = f.chase;
+        for (const off of [0, TRAIN_LENGTH / 2, TRAIN_LENGTH]) {
+          const p = pointAt(f.front - off);
+          const a = (Math.atan2(p.x - v.position.x, p.y - v.position.y) * 180) / Math.PI - v.look.yaw;
+          worst = Math.max(worst, Math.abs(((a + 540) % 360) - 180));
+        }
+      }
+      expect(worst).toBeLessThanOrEqual(9);
+    });
+
     it(`${tier}: the chase clears every box by ≥ 12 mm, and keeps the bore exemption inside`, () => {
       const boxes = buildPieces(tier)
         .filter((p) => p.id !== 'railbus')

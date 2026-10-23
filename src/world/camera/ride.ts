@@ -128,8 +128,12 @@ export const CHASE = {
   desktop: { vFov: LENS.mm50, behind: 180, up: 70 },
   phone: { vFov: LENS.mm35, behind: 200, up: 80 },
 } as const satisfies Record<Tier, { vFov: number; behind: number; up: number }>;
-/** The chase looks at the rail top this far ahead of the cab. */
-export const CHASE_AHEAD = 100;
+/**
+ * The chase aims at the middle of the train, 25 mm above rail (mid-body). Aiming ahead of
+ * the cab swings the train out of a portrait frame on the R3 curves (24° off axis against
+ * a 9° half-width at 390); the middle keeps both ends within 9°.
+ */
+export const CHASE_AIM = { back: TRAIN_LENGTH / 2, up: 25 } as const;
 /** The chase near and far planes, mm (0.003 / 5 m). */
 export const RIDE_CLIP = { near: 3, far: 5000 } as const;
 
@@ -178,8 +182,8 @@ export interface RideView {
 export function chaseView(cam: number, front: number, tier: Tier): RideView {
   const p = pointAt(cam);
   const position = { x: p.x, y: p.y, h: RAIL_TOP + chaseUp(cam, tier) };
-  const q = pointAt(front + CHASE_AHEAD);
-  return { position, look: lookAt(position, { x: q.x, y: q.y, h: RAIL_TOP }), vFov: CHASE[tier].vFov };
+  const q = pointAt(front - CHASE_AIM.back);
+  return { position, look: lookAt(position, { x: q.x, y: q.y, h: RAIL_TOP + CHASE_AIM.up }), vFov: CHASE[tier].vFov };
 }
 
 /** The cab view at the front window; `yaw` is the drag offset, clamped to ±25°. */
