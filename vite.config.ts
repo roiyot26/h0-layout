@@ -87,7 +87,20 @@ export default defineConfig({
     outDir: process.env.OUT_DIR ?? 'dist',
     emptyOutDir: true,
     target: 'es2022',
-    rollupOptions: { input: 'src/main.ts' },
+    rollupOptions: {
+      input: 'src/main.ts',
+      // Stable chunk names (M2 spec §5.3), so size-limit, budget and dist-guard can
+      // scope by file: the entry is boot-*, three.js is three-*, the 3D app is world-*.
+      output: {
+        entryFileNames: 'assets/boot-[hash].js',
+        chunkFileNames: 'assets/[name]-[hash].js',
+        manualChunks(id) {
+          if (id.includes('/node_modules/three/')) return 'three';
+          if (id.includes('/src/world/')) return 'world';
+          return undefined;
+        },
+      },
+    },
   },
   test: {
     // Playwright specs live under e2e/ and are run by the facts/axe CI jobs.
