@@ -381,33 +381,42 @@ test.describe('scene counts at every pose', () => {
   }
 });
 
+/**
+ * open(), then pauses the page clock. On the running clock the page keeps drawing in real
+ * time, and at 1440 SwiftShader is still busy with those frames when each screenshot asks.
+ */
+async function still(page: Page, vp: { width: number; height: number }, path = './') {
+  await open(page, vp, path);
+  await page.clock.pauseAt(await page.evaluate(() => Date.now() + 50));
+  await page.clock.runFor(100);
+}
+
 test.describe('screenshots', () => {
   test.skip(!OUT, 'WORLD_OUT not set');
-  test('overview and a transition at 1440 and 390', async ({ page }) => {
-    test.setTimeout(120_000);
-    mkdirSync(OUT!, { recursive: true });
-    for (const [name, vp] of [
-      ['1440', DESKTOP],
-      ['390', PHONE],
-    ] as const) {
-      await open(page, vp);
+  for (const [name, vp] of [
+    ['1440', DESKTOP],
+    ['390', PHONE],
+  ] as const) {
+    test(`overview and a transition at ${name}`, async ({ page }) => {
+      test.setTimeout(120_000);
+      mkdirSync(OUT!, { recursive: true });
+      await still(page, vp);
       await page.screenshot({ path: `${OUT}/rig-${name}-overview.png` });
       // Mid-crossfade, overview → Bootcamp, 150 of 300 ms.
       await page.evaluate(() => (window as unknown as W).__h0World.rig.go('bootcamp'));
       await page.clock.runFor(150);
       await page.screenshot({ path: `${OUT}/rig-${name}-crossfade-overview-bootcamp-150ms.png` });
-      await page.clock.runFor(600);
       // Mid-fly on each pair, 500 of 1000 ms.
       for (const [from, path, to] of [
         ['bootcamp', './bootcamp/', 'workshop'],
         ['campus', './teaching/', 'city'],
       ] as const) {
-        await open(page, vp, path);
+        await still(page, vp, path);
         await page.screenshot({ path: `${OUT}/rig-${name}-${from}.png` });
         await page.evaluate((d) => (window as unknown as W).__h0World.rig.go(d), to);
         await page.clock.runFor(500);
         await page.screenshot({ path: `${OUT}/rig-${name}-fly-${from}-${to}-500ms.png` });
       }
-    }
-  });
+    });
+  }
 });
