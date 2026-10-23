@@ -97,6 +97,11 @@ jobs:
       - name: Install e2e deps
         working-directory: e2e
         run: npm ci
+      - name: No email, mailto or phone in dist-3d (three and world chunks included)
+        working-directory: e2e
+        run: npm run guard
+        env:
+          DIST_DIR: ${{ github.workspace }}/dist-3d
       - name: Install Chromium
         working-directory: e2e
         run: npx playwright install chromium --with-deps
@@ -289,6 +294,11 @@ jobs:
       - name: Install e2e deps
         working-directory: e2e
         run: npm ci
+      - name: No email, mailto or phone in dist-off
+        working-directory: e2e
+        run: npm run guard
+        env:
+          DIST_DIR: ${{ github.workspace }}/dist-off
       - name: Install Chromium
         working-directory: e2e
         run: npx playwright install chromium --with-deps
