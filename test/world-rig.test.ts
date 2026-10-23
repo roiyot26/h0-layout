@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { FREE_AREA } from '../src/world/layout';
 import { NEIGHBOUR, destForPath, pathFor, phoneOffset } from '../src/world/rig';
 import { STATION_INFO } from '../src/world/stations';
+import { DRAG_GAIN, DRAG_THRESHOLD } from '../src/world/input';
 
 describe('camera rig helpers', () => {
   it('flies only between same-straight neighbours', () => {
@@ -31,4 +32,8 @@ describe('camera rig helpers', () => {
     expect(destForPath('/elsewhere/bootcamp/', '/h0-layout/')).toBeNull();
   });
 
+  it('uses an 8 px drag threshold', () => {
+    expect(DRAG_THRESHOLD).toBe(8);
+    expect(DRAG_GAIN).toBeGreaterThan(0);
+  });
 });
