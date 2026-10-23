@@ -144,9 +144,23 @@ describe('ride cameras', () => {
       expect(worst).toBeLessThan(Infinity);
     });
 
-    it(`${tier}: the cab sits at the front window, 33 mm above rail, 3° down`, () => {
+    it(`${tier}: the cab clears every box but the railbus by ≥ 12 mm, and the bore exemption inside`, () => {
+      const boxes = buildPieces(tier)
+        .filter((p) => p.id !== 'railbus')
+        .flatMap((p) => p.aabbs);
+      for (const f of run.filter((_, i) => i % 3 === 0)) {
+        const p = f.cab.position;
+        if (inBore(p)) {
+          expect(Math.abs(p.y - BACK_Y)).toBeLessThanOrEqual(13);
+          continue;
+        }
+        expect(clearance(p, boxes), `at ${p.x.toFixed(0)}, ${p.y.toFixed(0)}`).toBeGreaterThanOrEqual(MIN_CLEARANCE);
+      }
+    });
+
+    it(`${tier}: the cab sits just ahead of the nose, 33 mm above rail, 3° down`, () => {
       const v = cabView(1000);
-      const p = pointAt(1000 - CAB.back);
+      const p = pointAt(1000 + CAB.ahead);
       expect(v.position).toEqual({ x: p.x, y: p.y, h: RAIL_TOP + 33 });
       expect(v.look.pitch).toBe(-3);
       expect(v.vFov).toBe(46.4);

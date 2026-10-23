@@ -137,8 +137,12 @@ export const CHASE_AIM = { back: TRAIN_LENGTH / 2, up: 25 } as const;
 /** The chase near and far planes, mm (0.003 / 5 m). */
 export const RIDE_CLIP = { near: 3, far: 5000 } as const;
 
-/** The cab view: 28 mm lens, at the front window, 33 mm above rail, 3° down. */
-export const CAB = { vFov: LENS.mm28, up: 33, back: 4, pitch: -3, drag: 25 } as const;
+/**
+ * The cab view: 28 mm lens, at the front-car cab end, 33 mm above rail, 3° down. The
+ * grey-box car is a closed box drawn from both sides, so the eye sits 2 mm ahead of the
+ * nose (behind the near plane's reach of the front face) rather than inside the shell.
+ */
+export const CAB = { vFov: LENS.mm28, up: 33, ahead: 2, pitch: -3, drag: 25 } as const;
 
 /**
  * The low run (C12): through the tunnel and on through the City shed just west of it,
@@ -186,9 +190,9 @@ export function chaseView(cam: number, front: number, tier: Tier): RideView {
   return { position, look: lookAt(position, { x: q.x, y: q.y, h: RAIL_TOP + CHASE_AIM.up }), vFov: CHASE[tier].vFov };
 }
 
-/** The cab view at the front window; `yaw` is the drag offset, clamped to ±25°. */
+/** The cab view at the nose; `yaw` is the drag offset, clamped to ±25°. */
 export function cabView(front: number, yaw = 0): RideView {
-  const p = pointAt(front - CAB.back);
+  const p = pointAt(front + CAB.ahead);
   const drag = Math.min(Math.max(yaw, -CAB.drag), CAB.drag);
   const heading = (Math.atan2(p.tx, p.ty) * 180) / Math.PI;
   return { position: { x: p.x, y: p.y, h: RAIL_TOP + CAB.up }, look: { yaw: heading + drag, pitch: CAB.pitch }, vFov: CAB.vFov };
