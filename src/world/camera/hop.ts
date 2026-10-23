@@ -1,6 +1,7 @@
 // Hop paths between same-straight neighbours (M2 spec §2). Pure geometry in table mm
 // datum; the timing, the arc-length table and the un-orbit land with the camera rig.
 import type { TablePoint, Tier } from '../units';
+import { easeFly } from './easing';
 import { STATION_POSES } from './poses';
 
 /** The apex the back pair passes through: over the tunnel centreline, 300 datum (§2.3). */
@@ -47,15 +48,5 @@ export const hopCorridor = (tier: Tier, n = 400): TablePoint[] => [
   ...samplePath(frontPath(tier), n),
 ];
 
-/** cubic-bezier(0.65, 0, 0.35, 1) easing (§2.2, §2.3), solved by bisection on x. */
-export function easeHop(t: number): number {
-  const bez = (p1: number, p2: number, s: number) => 3 * (1 - s) ** 2 * s * p1 + 3 * (1 - s) * s * s * p2 + s ** 3;
-  let lo = 0;
-  let hi = 1;
-  for (let i = 0; i < 40; i++) {
-    const mid = (lo + hi) / 2;
-    if (bez(0.65, 0.35, mid) < t) lo = mid;
-    else hi = mid;
-  }
-  return bez(0, 1, (lo + hi) / 2);
-}
+/** cubic-bezier(0.65, 0, 0.35, 1) easing (§2.2, §2.3). */
+export const easeHop = easeFly;
