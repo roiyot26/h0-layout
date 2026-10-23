@@ -22,7 +22,7 @@ for (const vp of VIEWPORTS) {
     const errors: string[] = [];
     page.on('pageerror', (e) => errors.push(e.message));
     await page.goto('./?3d=1&trace=1');
-    await page.waitForFunction(() => (window as unknown as { __h0Trace?: { frames: unknown[] } }).__h0Trace?.frames.length! >= 60, null, {
+    await page.waitForFunction(() => ((window as unknown as { __h0Trace?: { frames: unknown[] } }).__h0Trace?.frames.length ?? 0) >= 60, null, {
       timeout: 20_000,
     });
     const result = await page.evaluate(() => {
