@@ -40,11 +40,23 @@ jobs:
           sudo apt-get update -qq && sudo apt-get install -y -qq poppler-utils
           npm ci
           npm run build
-          for f in $(find dist -type f); do node scripts/history-check.mjs --text "$f" > /dev/null; done
+          for f in $(find dist -type f); do
+            if [[ "$f" =~ ^dist/assets/three-[A-Za-z0-9_-]{8}\.js$ ]]; then
+              # three.js vendor code trips the phone pattern (M2 spec backlog 1, as in
+              # dist-guard). Only that finding is let through; any other one fails.
+              if ! out=$(node scripts/history-check.mjs --text "$f" 2>&1); then
+                if printf '%s\n' "$out" | grep '^  - ' | grep -qv ': phone number pattern$'; then printf '%s\n' "$out"; exit 1; fi
+                echo "history-check: $f skips the phone pattern (three.js vendor chunk)"
+              fi
+            else
+              node scripts/history-check.mjs --text "$f" > /dev/null
+            fi
+          done
           grep -q 'name="robots" content="noindex' dist/index.html
         env:
           SITE_BASE: /h0-layout-preview/pr-${{ github.event.pull_request.number }}/
           NOINDEX: '1'
+          FLAGS_FILE: flags.preview.json
       - name: Publish to the preview repo
         env:
           DEPLOY_KEY: ${{ secrets.PREVIEW_DEPLOY_KEY }}
