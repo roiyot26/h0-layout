@@ -70,6 +70,13 @@ export function orbitPosition(pose: Pose, s: OrbitState): TablePoint {
   };
 }
 
+/**
+ * Extra clearance the clamp keeps beyond 12 mm, so a fly leaving a pose clamped exactly to
+ * the boundary does not graze 12 mm in its first frames (the start moves along the path
+ * before the orientation turns, by up to 0.02 mm here).
+ */
+export const ORBIT_MARGIN = 1;
+
 const clamp = (v: number, lo: number, hi: number) => Math.min(Math.max(v, lo), hi);
 
 /** Range clamps only: azimuth, polar, distance and the target box. */
@@ -90,18 +97,56 @@ export function clampRanges(pose: Pose, limits: OrbitLimits, s: OrbitState): Orb
 
 /**
  * The full clamp: ranges, then the clearance field (§3.4). A dolly-in is shortened along
- * the view ray (the distance grows back in 1 mm steps) until clearance ≥ 12 mm. If no
- * distance inside the range clears, the move is refused and `fallback` (the last good
- * state, by default the authored one) is returned.
+ * the view ray (the distance grows back in 1 mm steps) until clearance ≥ 12 mm. `accept`
+ * may veto the result (the rig vetoes a station pose whose fly to its same-straight
+ * neighbour would pass within 12 mm of a mesh, §2.4). If nothing in range clears, or the
+ * veto holds, the move is refused and `fallback` (the last good state, by default the
+ * authored one) is returned.
  */
-export function clampOrbit(pose: Pose, limits: OrbitLimits, s: OrbitState, boxes: readonly Aabb[], fallback?: OrbitState): OrbitState {
+export function clampOrbit(
+  pose: Pose,
+  limits: OrbitLimits,
+  s: OrbitState,
+  boxes: readonly Aabb[],
+  fallback?: OrbitState,
+  accept?: (position: TablePoint) => boolean,
+): OrbitState {
   const r = clampRanges(pose, limits, s);
   const max = limits.distance ? limits.distance[1] : r.distance;
   for (let d = r.distance; d <= max + 1e-9; d += 1) {
     const next = { ...r, distance: d };
-    if (clearance(orbitPosition(pose, next), boxes) >= MIN_CLEARANCE) return next;
+    const p = orbitPosition(pose, next);
+    if (clearance(p, boxes) >= MIN_CLEARANCE + ORBIT_MARGIN) return !accept || accept(p) ? next : (fallback ?? authoredOrbit(pose));
   }
   return fallback ?? authoredOrbit(pose);
+}
+
+/**
+ * Drag from `from` towards `to` in `steps` equal increments, clamping each step against
+ * the last good state, as pointer input does. Returns where the drag ends up.
+ */
+export function dragOrbit(
+  pose: Pose,
+  limits: OrbitLimits,
+  from: OrbitState,
+  to: OrbitState,
+  boxes: readonly Aabb[],
+  accept?: (position: TablePoint) => boolean,
+  steps = 60,
+): OrbitState {
+  let s = from;
+  for (let i = 1; i <= steps; i++) {
+    const k = i / steps;
+    const lerp = (a: number, b: number) => a + (b - a) * k;
+    const want: OrbitState = {
+      azimuth: lerp(from.azimuth, to.azimuth),
+      polar: lerp(from.polar, to.polar),
+      distance: lerp(from.distance, to.distance),
+      target: { x: lerp(from.target.x, to.target.x), y: lerp(from.target.y, to.target.y), h: lerp(from.target.h, to.target.h) },
+    };
+    s = clampOrbit(pose, limits, want, boxes, s, accept);
+  }
+  return s;
 }
 
 /** Exponential approach of `current` to `goal`, with the rate set so it is within 0.5 % after `settleMs`. */
