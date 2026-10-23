@@ -3,7 +3,7 @@
 //
 //   node scripts/history-check.mjs --all        every commit, tree, path and ref
 //   node scripts/history-check.mjs --pre-push   commits about to be pushed (stdin from git)
-//   node scripts/history-check.mjs --text FILE  scan one file (used by tests)
+//   node scripts/history-check.mjs --text FILE  scan one file (tests, built dist files)
 //
 // What it checks:
 //   1. Author and committer email of every commit is the account's noreply address.
@@ -31,6 +31,11 @@
 // patterns (it still applies to the path itself, to messages and to every other
 // file). Patterns are "*.ext" suffix matches only. This is a rule about where a
 // term may appear, not a list of allowed words.
+//
+// Vendor chunk: in --text mode only, a built file whose last two path parts match
+// VENDOR_CHUNK (assets/three-<8-char hash>.js, the same pattern dist-guard uses) skips
+// the phone rule, because minified three.js trips it. Banned terms still apply to it,
+// and nothing is skipped for any other name or in --all / --pre-push.
 
 import { execFileSync } from 'node:child_process';
 import { createHash } from 'node:crypto';
@@ -169,10 +174,17 @@ function textForScan(path, rawLatin1) {
   }
 }
 
-function scanText(where, text, path = null, context = path ? 'content' : 'metadata') {
+// The three.js vendor chunk by its exact built name, relative to the dist root (M2 spec,
+// opening PR backlog 1). e2e/dist-guard.mjs imports this same pattern.
+export const VENDOR_CHUNK = /^assets\/three-[A-Za-z0-9_-]{8}\.js$/;
+
+/** True when a built file's path ends in assets/three-<8>.js (any dist directory). */
+export const isVendorChunk = (path) => VENDOR_CHUNK.test(path.replace(/\\/g, '/').split('/').slice(-2).join('/'));
+
+function scanText(where, text, path = null, context = path ? 'content' : 'metadata', skipPhone = false) {
   const hits = findBanned(text, path, entries, context);
   if (hits.length) report(where, `banned term (hash ${hits.join(', ')})`);
-  if (findPhoneOutsideIds(text)) report(where, 'phone number pattern');
+  if (!skipPhone && findPhoneOutsideIds(text)) report(where, 'phone number pattern');
 }
 
 const seenBlobs = new Set();
@@ -239,7 +251,9 @@ if (mode === '--all') {
   finish('push', count);
 } else if (mode === '--text') {
   const path = process.argv[3];
-  scanText(path, textForScan(path, readFileSync(path).toString('latin1')), path);
+  const vendor = isVendorChunk(path);
+  if (vendor) console.log(`history-check: ${path} skips the phone pattern (three.js vendor chunk)`);
+  scanText(path, textForScan(path, readFileSync(path).toString('latin1')), path, 'content', vendor);
   finish(path, 0);
 } else if (mode) {
   console.error('usage: history-check.mjs --all | --pre-push | --text FILE');

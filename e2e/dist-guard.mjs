@@ -10,7 +10,7 @@
 import { readFile, readdir, stat } from 'node:fs/promises';
 import { join, relative, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { findPhone } from '../scripts/history-check.mjs';
+import { findPhone, VENDOR_CHUNK } from '../scripts/history-check.mjs';
 
 // The repo's own phone rule (history-check), so dotted mobiles, 972 without the plus
 // and landlines are caught, plus this guard's earlier pattern so nothing scans less.
@@ -90,8 +90,9 @@ export function views(text) {
 // Minified vendor code trips the phone rule, and its own strings are not site copy, so
 // this one file shape skips the email-address and phone rules. The mailto and entity
 // rules still run on it, and every rule runs on every other file (world-*, boot-* and
-// anything that only looks similar).
-export const VENDOR_CHUNK = /^assets\/three-[A-Za-z0-9_-]{8}\.js$/;
+// anything that only looks similar). The pattern lives in scripts/history-check.mjs, so
+// both checks skip exactly the same file.
+export { VENDOR_CHUNK };
 export const VENDOR_SKIPS = ['email address', 'phone number'];
 
 /** The rules a dist-relative path skips: none, or VENDOR_SKIPS for the vendor chunk. */
