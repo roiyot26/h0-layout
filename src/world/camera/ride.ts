@@ -123,10 +123,14 @@ export function trainAt(t: number): TrainState {
   return { s: l.s1 - 0.5 * a * left * left, v: a * left, leg, phase: 'brake', at: null };
 }
 
-/** The chase camera per tier (STYLE §5 camera table). Distances in mm. */
+/**
+ * The chase camera per tier (STYLE §5 camera table). Distances in mm. The phone chase rides
+ * at 71 mm, not the table's 80, so it passes ≥ 21 mm under the paper plane's lowest path
+ * (TECH-PLAN; 22 mm with this height).
+ */
 export const CHASE = {
   desktop: { vFov: LENS.mm50, behind: 180, up: 70 },
-  phone: { vFov: LENS.mm35, behind: 200, up: 80 },
+  phone: { vFov: LENS.mm35, behind: 200, up: 71 },
 } as const satisfies Record<Tier, { vFov: number; behind: number; up: number }>;
 /**
  * The chase aims at the middle of the train, 25 mm above rail (mid-body). Aiming ahead of

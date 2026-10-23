@@ -173,4 +173,10 @@ describe('ride cameras', () => {
     for (let s = 0; s < LAP; s += 2) gap = Math.min(gap, planeHeight(s) - PLANE_HEAVE - chaseUp(s, 'desktop'));
     expect(gap).toBeGreaterThanOrEqual(21);
   });
+
+  it('phone: the chase passes under the paper plane path with ≥ 21 mm', () => {
+    let gap = Infinity;
+    for (let s = 0; s < LAP; s += 2) gap = Math.min(gap, planeHeight(s) - PLANE_HEAVE - chaseUp(s, 'phone'));
+    expect(gap).toBeGreaterThanOrEqual(21);
+  });
 });
