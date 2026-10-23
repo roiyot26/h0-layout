@@ -8,7 +8,7 @@ import type { TablePoint } from './units';
 export interface RigSample {
   /** Destination the camera is at or heading to. */
   dest: string;
-  /** 'idle', 'fly' or 'fade'. */
+  /** 'idle', 'fly', 'fade' or 'ride'. */
   mode: string;
   /** Transition progress: the fly's curve parameter, a fade's elapsed fraction, 1 when idle. */
   u: number;
@@ -29,6 +29,12 @@ export interface RigSample {
   opacityB: number;
   /** Station label opacity. */
   label: number;
+  /**
+   * During a ride: its clock (ms), the train's front arc length (mm, unwrapped) and speed
+   * (mm/s), the camera ('chase', 'cab' or 'stations' under reduced motion), the chase
+   * spring's arc length and the cab's yaw drag.
+   */
+  ride?: { t: number; s: number; v: number; cam: string; sc: number; yaw: number };
 }
 
 export interface TraceFrame extends RigSample {

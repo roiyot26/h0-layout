@@ -2,7 +2,8 @@
 // camera: idle orbit with damping, the 1.0 s fly between same-straight neighbours, the
 // 300 ms crossfade for every other hop (200 ms and no translation under reduced motion),
 // the tier-swap crossfade, the phone view offset, station labels, the logged DOF, history
-// and the per-frame trace. The crossfade draws the last frame of the outgoing view from a
+// the ride (chase and cab views behind the moving railbus; station views on input
+// under reduced motion) and the per-frame trace. The crossfade draws the last frame of the outgoing view from a
 // render target on a full-screen quad over the live, already cut-to frame, so the frame
 // never passes through black (§1.4).
 import {
@@ -20,21 +21,26 @@ import { type Fly, flyClear, makeFly } from './camera/fly';
 import { type OrbitState, authoredOrbit, clampOrbit, damp, limitsFor, orbitPosition } from './camera/orbit';
 import { type Look, along, lookAt } from './camera/orientation';
 import { type StationId, STATIONS, STATION_POSES, fovFor, tierFor } from './camera/poses';
+import { LEGS, RIDE_CLIP, RIDE_ORDER, cabView, chaseGoal, chaseView, follow, trainAt } from './camera/ride';
 import { type Dest, FLY_PAIRS, hopType, poseFor } from './camera/views';
 import type { Region } from './layout';
 import { FREE_AREA } from './layout';
 import type { World } from './renderer';
 import { STATION_INFO } from './stations';
 import type { RigSample, Trace } from './trace';
+import { PARKED_FRONT, placeTrain } from './train';
 import { type TablePoint, toThree } from './units';
 
-export type Mode = 'idle' | 'fly' | 'fade';
+export type Mode = 'idle' | 'fly' | 'fade' | 'ride';
+export type RideCam = 'chase' | 'cab';
+/** What the ride shows: a ride camera, or station views on input (reduced motion). */
+export type Riding = RideCam | 'stations' | null;
 
 export interface View {
   position: TablePoint;
   look: Look;
   vFov: number;
-  kind: 'overview' | 'station';
+  kind: 'overview' | 'station' | 'ride';
 }
 
 export interface Rig {
@@ -46,8 +52,22 @@ export interface Rig {
   readonly goal: OrbitState;
   readonly label: number;
   readonly opacityA: number;
-  /** Starts a hop; while one runs, the last request wins and runs on arrival. */
+  /** The ride in progress, if any. */
+  readonly riding: Riding;
+  /** True once a full lap has been ridden (the Cab toggle shows). */
+  readonly cabUnlocked: boolean;
+  /** Starts a hop (ending a ride first); while one runs, the last request wins and runs on arrival. */
   go(to: Dest, opts?: { push?: boolean }): void;
+  /** Starts the ride from where the camera is (idle only). */
+  ride(): void;
+  /** Ends the ride with a crossfade back to the view it started from. */
+  endRide(): void;
+  /** Switches the ride camera (the cab once unlocked). */
+  rideCam(cam: RideCam): void;
+  /** Reduced-motion ride: the next (or previous) station view. */
+  nextStation(dir?: 1 | -1): void;
+  /** Unlocks the cab view as a finished lap would (tests and the trace script). */
+  unlockCab(): void;
   /** Moves the orbit goal (idle only), clamped. `scale` multiplies the distance. */
   orbitBy(d: { azimuth?: number; polar?: number; scale?: number }): void;
   /** Re-fits the canvas; crossfades to the other tier's poses when the tier changes. */
@@ -137,6 +157,22 @@ export function createRig(opts: RigOptions): Rig {
   let last: number | null = null;
   let raf = 0;
   let disposed = false;
+  /** The ride: its clock (ms), camera, chase spring position, cab drag and start view. */
+  let ride: {
+    reduced: boolean;
+    t: number;
+    cam: RideCam;
+    sc: number;
+    yaw: number;
+    from: Dest;
+    stop: number;
+    arrived: number;
+    front: number;
+    v: number;
+  } | null = null;
+  /** After a ride fade, go back to riding instead of arriving. */
+  let fadeToRide = false;
+  let cabUnlocked = false;
 
   function viewFor(d: Dest, s: OrbitState): View {
     const pose = poseFor(world.tier, d);
@@ -150,6 +186,15 @@ export function createRig(opts: RigOptions): Rig {
     camera.up.set(0, 1, 0);
     camera.lookAt(...toThree(along(v.position, v.look, 1000)));
     camera.aspect = world.width / world.height;
+    if (v.kind === 'ride') {
+      // The ride lenses are fixed (STYLE §5): no FOV floor, no view offset.
+      camera.fov = v.vFov;
+      camera.near = RIDE_CLIP.near / 1000;
+      camera.far = RIDE_CLIP.far / 1000;
+      camera.clearViewOffset();
+      camera.updateProjectionMatrix();
+      return;
+    }
     camera.fov = fovFor({ ...pose, vFov: v.vFov }, world.tier, camera.aspect, v.kind);
     camera.near = v.kind === 'station' ? STATION_POSES[world.tier].bootcamp.near : pose.near;
     camera.far = v.kind === 'station' ? STATION_POSES[world.tier].bootcamp.far : pose.far;
@@ -248,7 +293,12 @@ export function createRig(opts: RigOptions): Rig {
     if (queued) {
       const q = queued;
       queued = null;
-      if (q.to !== dest) go(q.to, { push: q.push });
+      if (q.to !== dest) hopTo(q.to, { push: q.push });
+    }
+    // Ride pressed mid-hop: it boards once the hop lands.
+    if (rideQueued && mode === 'idle') {
+      rideQueued = false;
+      startRide();
     }
   }
 
@@ -273,7 +323,15 @@ export function createRig(opts: RigOptions): Rig {
     wake();
   }
 
+  let rideQueued = false;
+
   function go(next: Dest, o: { push?: boolean } = {}) {
+    // A hop from outside the ride (Back, a deep link, the keyboard) ends it on the spot.
+    if (ride) stopRide();
+    hopTo(next, o);
+  }
+
+  function hopTo(next: Dest, o: { push?: boolean } = {}) {
     const pushIt = o.push ?? true;
     if (mode !== 'idle') {
       queued = { to: next, push: pushIt };
@@ -289,6 +347,11 @@ export function createRig(opts: RigOptions): Rig {
   }
 
   function orbitBy(d: { azimuth?: number; polar?: number; scale?: number }) {
+    if (ride && !ride.reduced) {
+      // The cab view takes a yaw drag of ±25°; the chase takes none.
+      if (ride.cam === 'cab') ride.yaw = Math.min(Math.max(ride.yaw - (d.azimuth ?? 0), -25), 25);
+      return;
+    }
     if (mode !== 'idle') return;
     const pose = poseFor(world.tier, dest);
     const want: OrbitState = {
@@ -306,13 +369,157 @@ export function createRig(opts: RigOptions): Rig {
     wake();
   }
 
+  // The ride (M2-10, M2-13). It never touches history: it is a way of looking, not a page.
+  const rideUi = region.ride;
+
+  function showRide(on: boolean) {
+    rideUi.start.hidden = on;
+    rideUi.bar.hidden = !on;
+    region.nav.hidden = on;
+    rideUi.next.hidden = !(on && ride?.reduced);
+    rideUi.cab.hidden = !(on && !ride?.reduced && cabUnlocked);
+    rideUi.cab.setAttribute('aria-pressed', ride?.cam === 'cab' ? 'true' : 'false');
+  }
+
+  /** Crossfades over `ms` from the frame on screen; the ride keeps running under it. */
+  function cut(ms: number) {
+    snapshot();
+    hideLabels();
+    mode = 'fade';
+    fadeMs = ms;
+    opacityA = 1;
+    t0 = null;
+    fadeToRide = true;
+    wake();
+  }
+
+  function rideView(): View {
+    const r = ride!;
+    const v = r.cam === 'cab' ? cabView(r.front, r.yaw) : chaseView(r.sc, r.front, world.tier);
+    return { ...v, kind: 'ride' };
+  }
+
+  function startRide() {
+    if (ride || disposed) return;
+    if (mode !== 'idle') {
+      rideQueued = true;
+      return;
+    }
+    const red = reduced();
+    const front = PARKED_FRONT;
+    ride = { reduced: red, t: 0, cam: 'chase', sc: chaseGoal(front, world.tier), yaw: 0, from: dest, stop: 0, arrived: 0, front, v: 0 };
+    showRide(true);
+    (red ? rideUi.next : rideUi.exit).focus({ preventScroll: true });
+    region.live.textContent = red ? 'Riding the train: station views. Esc ends the ride.' : 'Riding the train. Esc ends the ride.';
+    if (red) {
+      // Reduced motion: the train stays parked; each station view comes on input, by 200 ms crossfade.
+      if (dest !== RIDE_ORDER[0]) begin(RIDE_ORDER[0]!, false, DURATION.crossfadeReduced);
+      return;
+    }
+    hideLabels();
+    cut(DURATION.crossfade);
+    view = rideView();
+  }
+
+  /** Ends the ride at once: the train parks, the controls go back. */
+  function stopRide(): Dest {
+    const from = ride!.from;
+    const wasReduced = ride!.reduced;
+    ride = null;
+    if (mode === 'ride') mode = 'idle';
+    if (mode === 'fade' && fadeToRide && !wasReduced) {
+      // Mid ride crossfade: finish it on the view the ride started from.
+      to = from;
+      orbit = authoredOrbit(poseFor(world.tier, from));
+      goal = { ...orbit, target: { ...orbit.target } };
+      view = viewFor(from, orbit);
+    }
+    fadeToRide = false;
+    for (const p of world.pieces) if (p.id === 'railbus') placeTrain(p.group, PARKED_FRONT);
+    const focusBack = rideUi.bar.contains(document.activeElement);
+    showRide(false);
+    if (focusBack) rideUi.start.focus({ preventScroll: true });
+    return from;
+  }
+
+  function endRide() {
+    if (!ride) return;
+    const wasReduced = ride.reduced;
+    const fading = mode === 'fade';
+    if (!fading && !wasReduced) snapshot();
+    queued = null;
+    const from = stopRide();
+    rideUi.start.focus({ preventScroll: true });
+    region.live.textContent = 'Ride ended.';
+    // Already crossfading: stopRide pointed it at the start view.
+    if (fading && !wasReduced) return;
+    if (fading) {
+      queued = { to: from, push: false };
+      return;
+    }
+    // Back to the view the ride started from, by crossfade (the train parks under it).
+    if (from === dest && wasReduced) return;
+    begin(from, false, reduced() ? DURATION.crossfadeReduced : DURATION.crossfade, !wasReduced);
+  }
+
+  function rideCam(cam: RideCam) {
+    if (!ride || ride.reduced || ride.cam === cam || (cam === 'cab' && !cabUnlocked)) return;
+    if (mode !== 'fade') cut(DURATION.crossfade);
+    ride.cam = cam;
+    ride.yaw = 0;
+    showRide(true);
+    view = rideView();
+  }
+
+  function nextStation(dir: 1 | -1 = 1) {
+    if (!ride?.reduced) return;
+    ride.stop = (ride.stop + dir + RIDE_ORDER.length) % RIDE_ORDER.length;
+    const id = RIDE_ORDER[ride.stop]!;
+    hopTo(id, { push: false });
+  }
+
+  function unlockCab() {
+    cabUnlocked = true;
+    if (ride) showRide(true);
+  }
+
+  /** Advances the ride clock by dt and moves the train and the chase spring. */
+  function advanceRide(dt: number) {
+    const r = ride!;
+    r.t += dt;
+    const tr = trainAt(r.t);
+    r.front = tr.s;
+    r.v = tr.v;
+    r.sc = follow(r.sc, chaseGoal(tr.s, world.tier), dt);
+    for (const p of world.pieces) if (p.id === 'railbus') placeTrain(p.group, tr.s);
+    // Arrivals: announce each station; the lap ends back at Bootcamp and unlocks the cab.
+    const arrivals = LEGS.filter((l) => r.t >= l.arrive).length;
+    if (arrivals > r.arrived) {
+      r.arrived = arrivals;
+      const at = LEGS[arrivals - 1]!.to;
+      if (arrivals === LEGS.length && !cabUnlocked) {
+        cabUnlocked = true;
+        showRide(true);
+        region.live.textContent = `${STATION_INFO[at].name}. One full lap: the cab view is unlocked.`;
+      } else region.live.textContent = STATION_INFO[at].name;
+    }
+    if (tr.phase === 'done' && mode === 'ride') {
+      endRide();
+      return;
+    }
+    if (mode === 'ride' || (mode === 'fade' && fadeToRide)) view = rideView();
+  }
+
   const settled = () =>
     Math.abs(orbit.azimuth - goal.azimuth) < 1e-3 && Math.abs(orbit.polar - goal.polar) < 1e-3 && Math.abs(orbit.distance - goal.distance) < 1e-2;
 
   function frame(now: number) {
     const dt = last === null ? 16.67 : Math.min(Math.max(now - last, 0), 100);
     last = now;
-    if (mode === 'fly' && fly) {
+    if (ride && !ride.reduced) advanceRide(dt);
+    if (mode === 'ride') {
+      // (advanceRide set the view)
+    } else if (mode === 'fly' && fly) {
       if (t0 === null) t0 = now;
       const el = now - t0;
       const f = fly.at(el);
@@ -326,7 +533,15 @@ export function createRig(opts: RigOptions): Rig {
       opacityA = fadeOut(el, fadeMs);
       u = Math.min(el / fadeMs, 1);
       e = u;
-      if (el >= fadeMs) arrive(now);
+      if (el >= fadeMs) {
+        if (fadeToRide && ride) {
+          mode = 'ride';
+          fadeToRide = false;
+          opacityA = 0;
+          t0 = null;
+          u = e = 1;
+        } else arrive(now);
+      }
     } else {
       const k = DURATION.orbitSettle;
       orbit = {
@@ -362,11 +577,12 @@ export function createRig(opts: RigOptions): Rig {
         opacityB: 1 - opacityA,
         label,
       };
+      if (ride) sample.ride = { t: ride.t, s: ride.front, v: ride.v, cam: ride.reduced ? 'stations' : ride.cam, sc: ride.sc, yaw: ride.yaw };
       trace.record(now, sample);
     }
   }
 
-  const busy = () => mode !== 'idle' || label < 1 || dof !== dofTo || !settled();
+  const busy = () => ride !== null || mode !== 'idle' || label < 1 || dof !== dofTo || !settled();
 
   function loop(now: number) {
     raf = 0;
@@ -385,6 +601,14 @@ export function createRig(opts: RigOptions): Rig {
     const before = world.tier;
     const old = world.width;
     const oldH = world.height;
+    if (tierFor(window.innerWidth, window.innerHeight) !== before && ride && !ride.reduced) {
+      // The tier swap mid-ride: the same crossfade, onto the other tier's chase.
+      cut(reduced() ? DURATION.tierSwapReduced : DURATION.tierSwap);
+      world.resize();
+      ride.sc = chaseGoal(ride.front, world.tier);
+      view = rideView();
+      return;
+    }
     if (tierFor(window.innerWidth, window.innerHeight) !== before) {
       // The tier swap (§1.1): a crossfade to the same destination on the other tier's
       // poses. A hop in progress lands where it was heading; nothing touches history.
@@ -444,7 +668,18 @@ export function createRig(opts: RigOptions): Rig {
     get opacityA() {
       return opacityA;
     },
+    get riding(): Riding {
+      return ride ? (ride.reduced ? 'stations' : ride.cam) : null;
+    },
+    get cabUnlocked() {
+      return cabUnlocked;
+    },
     go,
+    ride: startRide,
+    endRide,
+    rideCam,
+    nextStation,
+    unlockCab,
     orbitBy,
     resize,
     frame,
