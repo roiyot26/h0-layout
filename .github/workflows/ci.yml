@@ -248,6 +248,22 @@ jobs:
           OUT_DIR: dist-off
       - name: Content checks, companies off
         run: node scripts/content-check.mjs dist-off --companies off
+      - name: Install e2e deps
+        working-directory: e2e
+        run: npm ci
+      - name: Install Chromium
+        working-directory: e2e
+        run: npx playwright install chromium --with-deps
+      - name: Facts routes, companies off (JS off, 1440 and 390)
+        working-directory: e2e
+        run: |
+          npm run facts
+        env:
+          CI: 'true'
+          SHOW_COMPANIES: '0'
+          SITE_BASE: /h0-layout/
+          DIST_DIR: ${{ github.workspace }}/dist-off
+          PORT: '4173'
 
   cv:
     name: cv
