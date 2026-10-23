@@ -23,6 +23,15 @@ const CSS = `
   letter-spacing: 0.04em; color: #1c1d1f; background: #f2eee4; border: 2px solid #f2eee4; border-radius: 3px; cursor: pointer; }
 .layout-region .switcher button[aria-current='true'] { border-color: #1f3a5f; }
 .layout-region .switcher button:focus-visible { outline-color: #1f3a5f; }
+.layout-region .ride { position: absolute; top: 76px; right: 16px; display: flex; gap: 8px; margin: 0; }
+.layout-region .ride [hidden] { display: none; }
+.layout-region .ride-bar { display: flex; gap: 8px; }
+.layout-region .ride button { min-height: 48px; padding: 0 14px; font: 600 15px/1.15 var(--sans); letter-spacing: 0.04em;
+  color: #1c1d1f; background: #f2eee4; border: 2px solid #f2eee4; border-radius: 3px; cursor: pointer; }
+.layout-region .ride button[aria-pressed='true'] { border-color: #1f3a5f; }
+.layout-region .ride .ride-exit { width: 48px; min-width: 48px; height: 48px; padding: 0; font-size: 22px; line-height: 1; }
+.layout-region .ride button:focus-visible { outline-color: #1f3a5f; }
+.layout-region .switcher[hidden] { display: none; }
 .layout-region .sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
 @media (max-width: 882.98px), (max-height: 499.98px) {
   .layout-region .switcher { bottom: 88px; left: 8px; right: 8px; transform: none; }
@@ -33,10 +42,21 @@ const CSS = `
 /** Phone free area (§1.3): 64 px top bar; 88 px peek + 44 px switcher + 8 px gap at the bottom. */
 export const FREE_AREA = { top: 64, bottom: 88 + 44 + 8 } as const;
 
+/** The ride controls (M2-10): Ride, then the bar with Next station, Cab view and ✕. */
+export interface RideControls {
+  start: HTMLButtonElement;
+  bar: HTMLElement;
+  next: HTMLButtonElement;
+  cab: HTMLButtonElement;
+  exit: HTMLButtonElement;
+}
+
 export interface Region {
   root: HTMLElement;
   canvasHost: HTMLElement;
+  nav: HTMLElement;
   switcher: Map<Dest, HTMLButtonElement>;
+  ride: RideControls;
   labels: Map<StationId, HTMLButtonElement>;
   live: HTMLElement;
   /** Re-fits the region to the body padding and the top bar. */
@@ -93,6 +113,32 @@ export function createRegion(parent: HTMLElement = document.body): Region {
   }
   root.append(nav);
 
+  const rideRoot = document.createElement('div');
+  rideRoot.className = 'ride';
+  const button = (cls: string, text: string) => {
+    const b = document.createElement('button');
+    b.type = 'button';
+    b.className = cls;
+    b.textContent = text;
+    return b;
+  };
+  const start = button('ride-start', 'Ride the train');
+  const bar = document.createElement('div');
+  bar.className = 'ride-bar';
+  bar.setAttribute('role', 'group');
+  bar.setAttribute('aria-label', 'Ride');
+  bar.hidden = true;
+  const next = button('ride-next', 'Next station');
+  const cab = button('ride-cab', 'Cab view');
+  cab.setAttribute('aria-pressed', 'false');
+  const exit = button('ride-exit', '✕');
+  exit.setAttribute('aria-label', 'End the ride');
+  next.hidden = true;
+  cab.hidden = true;
+  bar.append(next, cab, exit);
+  rideRoot.append(start, bar);
+  root.append(rideRoot);
+
   const live = document.createElement('p');
   live.className = 'sr-only';
   live.setAttribute('aria-live', 'polite');
@@ -118,7 +164,9 @@ export function createRegion(parent: HTMLElement = document.body): Region {
   return {
     root,
     canvasHost,
+    nav,
     switcher,
+    ride: { start, bar, next, cab, exit },
     labels,
     live,
     fit,
