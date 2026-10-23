@@ -109,11 +109,12 @@ describe('dist-guard', () => {
     const js = (v: string) => `const k="${v}";export{k};\n`;
     const vendor = 'assets/three-AbCd1234.js';
 
-    it('skips only the phone and email rules on assets/three-<8>.js, and logs each skip', () => {
+    it('blanks nothing it does not list: a planted number and address fail in assets/three-<8>.js', () => {
       const r = run({ [vendor]: js(phone) + js(`${user[0]}${at}${host}`) });
-      expect(r.code).toBe(0);
-      expect(r.out).toContain(`dist-guard: skip ${vendor}: phone number`);
-      expect(r.out).toContain(`dist-guard: skip ${vendor}: email address`);
+      expect(r.code).toBe(1);
+      expect(r.out).toMatch(/FAIL assets\/three-AbCd1234\.js:\d+: phone number/);
+      expect(r.out).toMatch(/FAIL assets\/three-AbCd1234\.js:\d+: email address/);
+      expect(r.out).toContain(`dist-guard: ${vendor}: 0 listed finding(s) blanked`);
       expect(r.out).not.toContain('4567');
     });
 
@@ -121,7 +122,7 @@ describe('dist-guard', () => {
       const r = run({ 'assets/world-AbCd1234.js': js(phone) });
       expect(r.code).toBe(1);
       expect(r.out).toMatch(/FAIL assets\/world-AbCd1234\.js:\d+: phone number/);
-      expect(r.out).not.toContain('dist-guard: skip');
+      expect(r.out).not.toContain('listed finding');
     });
 
     for (const name of [
@@ -138,7 +139,7 @@ describe('dist-guard', () => {
         expect(r.code).toBe(1);
         expect(r.out).toContain(`FAIL ${name}:`);
         expect(r.out).toMatch(/: phone number/);
-        expect(r.out).not.toContain('dist-guard: skip');
+        expect(r.out).not.toContain('listed finding');
       });
     }
 

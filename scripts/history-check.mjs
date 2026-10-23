@@ -11,6 +11,10 @@
 //      file paths or ref names. Banned terms are stored only as SHA-256 hashes in
 //      scripts/banned.sha256.json, so the words never appear in the repo.
 //   3. No phone number pattern anywhere.
+//   4. In --text mode, for a built file (under a dist or dist-* directory), no email
+//      address either, except inside a PDF (the CV may carry it). The pattern is the one
+//      dist-guard uses. Other files, such as package-lock.json, may quote third-party
+//      addresses and are not checked for one.
 //
 // Matching: text is split on camelCase and on every non-alphanumeric character,
 // lowercased, and each run of 1-5 consecutive tokens is joined and hashed. Whole
@@ -33,9 +37,10 @@
 // term may appear, not a list of allowed words.
 //
 // Vendor chunk: in --text mode only, a built file whose last two path parts match
-// VENDOR_CHUNK (assets/three-<8-char hash>.js, the same pattern dist-guard uses) skips
-// the phone rule, because minified three.js trips it. Banned terms still apply to it,
-// and nothing is skipped for any other name or in --all / --pre-push.
+// assets/three-<8-char hash>.js has the known three.js findings listed in
+// scripts/vendor-allowlist.mjs blanked before the phone scan (dist-guard uses the same
+// list). Every rule still runs on the rest of the file, banned terms run on all of it,
+// and nothing is blanked for any other name or in --all / --pre-push.
 
 import { execFileSync } from 'node:child_process';
 import { createHash } from 'node:crypto';
@@ -43,6 +48,7 @@ import { readFileSync, writeFileSync, unlinkSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { blankVendorFindings, isVendorChunk } from './vendor-allowlist.mjs';
 
 const here = dirname(fileURLToPath(import.meta.url));
 const list = JSON.parse(readFileSync(join(here, 'banned.sha256.json'), 'utf8'));
@@ -51,7 +57,11 @@ const entries = new Map(list.entries.map((e) => [e.h, e]));
 const MAX_N = 5;
 const ZERO = /^0+$/;
 
-const PHONE = [
+// A built file: anything under a directory named dist or dist-<name>.
+const BUILT = /(?:^|\/)dist(?:-[^/]*)?\//;
+export const EMAIL = /[A-Z0-9._%+-]+@[A-Z0-9-]+(?:\.[A-Z0-9-]+)*\.[A-Z]{2,}/i;
+
+export const PHONE = [
   /(?<![\d+])(?:\+972|972|0)[-\s.]?5\d(?:[-\s.]?\d){7}(?!\d)/,
   /(?<![\d+])(?:\+972|0)[-\s.]?[2-489](?:[-\s.]?\d){7}(?!\d)/,
   /\+\d{1,3}[\s.-]?\(?\d{2,4}\)?(?:[\s.-]?\d{3,4}){2}(?!\d)/,
@@ -174,17 +184,12 @@ function textForScan(path, rawLatin1) {
   }
 }
 
-// The three.js vendor chunk by its exact built name, relative to the dist root (M2 spec,
-// opening PR backlog 1). e2e/dist-guard.mjs imports this same pattern.
-export const VENDOR_CHUNK = /^assets\/three-[A-Za-z0-9_-]{8}\.js$/;
-
-/** True when a built file's path ends in assets/three-<8>.js (any dist directory). */
-export const isVendorChunk = (path) => VENDOR_CHUNK.test(path.replace(/\\/g, '/').split('/').slice(-2).join('/'));
-
-function scanText(where, text, path = null, context = path ? 'content' : 'metadata', skipPhone = false) {
+// `ruleText` is the text the phone rule reads, when it differs (the vendor chunk with
+// its listed findings blanked).
+function scanText(where, text, path = null, context = path ? 'content' : 'metadata', ruleText = text) {
   const hits = findBanned(text, path, entries, context);
   if (hits.length) report(where, `banned term (hash ${hits.join(', ')})`);
-  if (!skipPhone && findPhoneOutsideIds(text)) report(where, 'phone number pattern');
+  if (findPhoneOutsideIds(ruleText)) report(where, 'phone number pattern');
 }
 
 const seenBlobs = new Set();
@@ -251,9 +256,16 @@ if (mode === '--all') {
   finish('push', count);
 } else if (mode === '--text') {
   const path = process.argv[3];
-  const vendor = isVendorChunk(path);
-  if (vendor) console.log(`history-check: ${path} skips the phone pattern (three.js vendor chunk)`);
-  scanText(path, textForScan(path, readFileSync(path).toString('latin1')), path, 'content', vendor);
+  const text = textForScan(path, readFileSync(path).toString('latin1'));
+  let ruleText = text;
+  if (isVendorChunk(path)) {
+    const r = blankVendorFindings(blankIds(text), [EMAIL, ...PHONE]);
+    ruleText = r.text;
+    console.log(`history-check: ${path}: ${r.blanked} listed three.js finding(s) blanked`);
+  }
+  scanText(path, text, path, 'content', ruleText);
+  const built = BUILT.test(path.replace(/\\/g, '/'));
+  if (built && !path.toLowerCase().endsWith('.pdf') && EMAIL.test(ruleText)) report(path, 'email address pattern');
   finish(path, 0);
 } else if (mode) {
   console.error('usage: history-check.mjs --all | --pre-push | --text FILE');

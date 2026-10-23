@@ -10,7 +10,8 @@
 import { readFile, readdir, stat } from 'node:fs/promises';
 import { join, relative, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { findPhone, VENDOR_CHUNK } from '../scripts/history-check.mjs';
+import { EMAIL, findPhone, PHONE } from '../scripts/history-check.mjs';
+import { blankVendorFindings, THREE_VERSION, VENDOR_CHUNK } from '../scripts/vendor-allowlist.mjs';
 
 // The repo's own phone rule (history-check), so dotted mobiles, 972 without the plus
 // and landlines are caught, plus this guard's earlier pattern so nothing scans less.
@@ -34,7 +35,7 @@ function phoneHit(raw) {
 const TEXT = /\.(html?|js|mjs|cjs|css|json|xml|txt|svg|webmanifest|map)$/i;
 const rules = [
   ['mailto', (s) => /mailto:/i.exec(s)],
-  ['email address', (s) => /[A-Z0-9._%+-]+@[A-Z0-9-]+(?:\.[A-Z0-9-]+)*\.[A-Z]{2,}/i.exec(s)],
+  ['email address', (s) => EMAIL.exec(s)],
   ['entity-encoded @', (s) => /&#(?:0*64|x0*40)|&commat/i.exec(s)],
   ['phone number', (s) => PHONE_EXTRA.exec(s) ?? phoneHit(s)],
 ];
@@ -86,23 +87,21 @@ export function views(text) {
   return [...new Set(out)];
 }
 
-// The three.js vendor chunk, by its exact built name (M2 spec, opening PR backlog 1).
-// Minified vendor code trips the phone rule, and its own strings are not site copy, so
-// this one file shape skips the email-address and phone rules. The mailto and entity
-// rules still run on it, and every rule runs on every other file (world-*, boot-* and
-// anything that only looks similar). The pattern lives in scripts/history-check.mjs, so
-// both checks skip exactly the same file.
-export { VENDOR_CHUNK };
-export const VENDOR_SKIPS = ['email address', 'phone number'];
+// The three.js vendor chunk (assets/three-<8>.js at the dist root): the known findings
+// in the pinned build, listed in scripts/vendor-allowlist.mjs and shared with
+// history-check, are blanked first. Every rule then runs on the rest of the chunk.
+export const VENDOR_PATTERNS = [EMAIL, PHONE_EXTRA, ...PHONE];
 
-/** The rules a dist-relative path skips: none, or VENDOR_SKIPS for the vendor chunk. */
-export const skippedRules = (rel) => (VENDOR_CHUNK.test(rel) ? VENDOR_SKIPS : []);
+/** The text the rules read for a dist-relative path, and how many findings were blanked. */
+export function forScan(rel, text) {
+  if (!VENDOR_CHUNK.test(rel)) return { text, blanked: 0 };
+  return blankVendorFindings(text, VENDOR_PATTERNS);
+}
 
 // Returns [{ rule, line }] for the first hit of each rule. Never returns the match.
-export function scan(text, skip = []) {
+export function scan(text) {
   const found = [];
   for (const [rule, find] of rules) {
-    if (skip.includes(rule)) continue;
     for (const view of views(text)) {
       const m = find(view);
       if (!m) continue;
@@ -132,9 +131,11 @@ async function main() {
   const files = (await walk(dist)).filter((p) => TEXT.test(p));
   for (const file of files) {
     const rel = relative(dist, file).replace(/\\/g, '/');
-    const skip = skippedRules(rel);
-    for (const rule of skip) console.log(`dist-guard: skip ${rel}: ${rule} (three.js vendor chunk)`);
-    for (const { rule, line } of scan(await readFile(file, 'utf8'), skip)) {
+    const { text, blanked } = forScan(rel, await readFile(file, 'utf8'));
+    if (VENDOR_CHUNK.test(rel)) {
+      console.log(`dist-guard: ${rel}: ${blanked} listed finding(s) blanked (three ${THREE_VERSION})`);
+    }
+    for (const { rule, line } of scan(text)) {
       bad++;
       console.log(`FAIL ${rel}:${line}: ${rule}`);
     }
