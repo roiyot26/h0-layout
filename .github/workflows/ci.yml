@@ -79,6 +79,44 @@ jobs:
       - name: Byte budget
         run: npm run budget
 
+  world:
+    name: world
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with: { node-version: 20, cache: npm }
+      - run: npm ci
+      - name: Build the 3D preview into dist-3d
+        run: npx vite build
+        env:
+          SITE_BASE: /h0-layout/
+          FLAGS_FILE: flags.preview.json
+          OUT_DIR: dist-3d
+      - name: Install e2e deps
+        working-directory: e2e
+        run: npm ci
+      - name: Install Chromium
+        working-directory: e2e
+        run: npx playwright install chromium --with-deps
+      - name: Scene caps at the overview (1440 and 390, SwiftShader)
+        working-directory: e2e
+        run: npm run world
+        env:
+          CI: 'true'
+          SITE_BASE: /h0-layout/
+          DIST_DIR: ${{ github.workspace }}/dist-3d
+          PORT: '4173'
+          WORLD_OUT: ${{ github.workspace }}/world-out
+      - name: Upload the overview shots and counts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: world-overview
+          path: world-out/
+          if-no-files-found: ignore
+
   history:
     runs-on: ubuntu-latest
     timeout-minutes: 20

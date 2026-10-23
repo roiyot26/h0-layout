@@ -38,6 +38,18 @@ export default defineConfig({
       use: { javaScriptEnabled: true, browserName: 'chromium' },
     },
     {
+      // Run against the 3D preview build (DIST_DIR=dist-3d). SwiftShader stands in for
+      // a GPU on the box and in CI, so frame times here are advisory only.
+      name: 'world',
+      testMatch: 'world.spec.ts',
+      timeout: 60_000,
+      use: {
+        javaScriptEnabled: true,
+        browserName: 'chromium',
+        launchOptions: { args: ['--use-angle=swiftshader', '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist'] },
+      },
+    },
+    {
       name: 'axe',
       testMatch: 'axe.spec.ts',
       use: { javaScriptEnabled: true, browserName: 'chromium' },
