@@ -240,8 +240,9 @@ export function createRig(opts: RigOptions): Rig {
     dofTo = dist(view.position, orbit.target);
     markCurrent();
     if (changed) {
-      // Station hops get a history entry; the overview, the tier swap and orbiting do not.
-      if (push && dest !== 'overview' && history.state?.h0 !== dest) history.pushState({ h0: dest }, '', `${base}${pathFor(dest)}${location.search}${location.hash}`);
+      // Every hop gets a history entry, the overview included, so Back walks them;
+      // the tier swap and orbiting do not.
+      if (push && history.state?.h0 !== dest) history.pushState({ h0: dest }, '', `${base}${pathFor(dest)}${location.search}${location.hash}`);
       region.live.textContent = dest === 'overview' ? 'The layout' : STATION_INFO[dest].name;
     }
     if (queued) {

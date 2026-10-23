@@ -247,22 +247,37 @@ test.describe('F20 (b): orbited starts', () => {
 });
 
 test.describe('history, deep links, tier swap', () => {
-  test('a station hop pushes its page; the overview and orbit do not; Back hops', async ({ page }) => {
+  test('every hop pushes its page, the overview included; orbit does not; Back hops', async ({ page }) => {
     await open(page, DESKTOP);
     const len = await page.evaluate(() => history.length);
+    const back = async (to: string) => {
+      await page.evaluate(() => history.back());
+      for (let i = 0; i < 20 && (await rig(page, (r) => [r.dest, r.mode].join())) !== `${to},idle`; i++) await page.clock.runFor(100);
+      expect(await rig(page, (r) => r.dest)).toBe(to);
+    };
     await hop(page, 'bootcamp');
     expect(new URL(page.url()).pathname).toMatch(/\/bootcamp\/$/);
     expect(await page.evaluate(() => history.length)).toBe(len + 1);
     await page.evaluate(() => (window as unknown as W).__h0World.rig.orbitBy({ azimuth: 10 }));
     await page.clock.runFor(600);
-    await hop(page, 'overview');
     expect(await page.evaluate(() => history.length)).toBe(len + 1);
+    await hop(page, 'overview');
+    expect(await page.evaluate(() => history.length)).toBe(len + 2);
+    expect(new URL(page.url()).pathname).toMatch(/\/$/);
+    expect(new URL(page.url()).pathname).not.toMatch(/bootcamp/);
     await hop(page, 'workshop');
     expect(new URL(page.url()).pathname).toMatch(/\/workshop\/$/);
-    await page.evaluate(() => history.back());
+    // Back walks workshop → overview → bootcamp → the cold overview.
+    await back('overview');
+    expect(new URL(page.url()).pathname).not.toMatch(/workshop/);
+    await back('bootcamp');
+    expect(new URL(page.url()).pathname).toMatch(/\/bootcamp\/$/);
+    await back('overview');
+    expect(new URL(page.url()).search).toContain('3d=1');
+    // Forward hops again.
+    await page.evaluate(() => history.forward());
     for (let i = 0; i < 20 && (await rig(page, (r) => r.dest)) !== 'bootcamp'; i++) await page.clock.runFor(100);
     expect(await rig(page, (r) => r.dest)).toBe('bootcamp');
-    expect(new URL(page.url()).search).toContain('3d=1');
   });
 
   for (const s of STATIONS) {
