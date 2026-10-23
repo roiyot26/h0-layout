@@ -26,6 +26,15 @@ jobs:
       - run: npm run build
         env:
           SITE_BASE: /h0-layout/
+      - name: No 3D chunks in the production build
+        run: |
+          found=$(find dist/assets -type f \( -name 'three-*' -o -name 'world-*' \) | sort)
+          if [ -n "$found" ]; then
+            echo "3D chunks in the production build (ENABLE_3D must stay off):"
+            echo "$found"
+            exit 1
+          fi
+          echo "dist/assets has no three-* or world-* file"
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v4
         with:
