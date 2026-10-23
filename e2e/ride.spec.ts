@@ -275,7 +275,11 @@ test.describe('M2-10 ride', () => {
     await page.clock.runFor(2000);
     const n = await mark(page);
     await page.setViewportSize(PHONE);
-    for (let i = 0; i < 30 && (await page.evaluate(() => (window as unknown as W).__h0World.tier)) !== 'phone'; i++) await page.clock.runFor(16);
+    // Chromium may hold the resize event while the clock is paused, so fire it here once
+    // the new size is in (a late real event then finds the tier already swapped).
+    await expect.poll(() => page.evaluate(() => innerWidth)).toBe(PHONE.width);
+    await page.evaluate(() => dispatchEvent(new Event('resize')));
+    expect(await page.evaluate(() => (window as unknown as W).__h0World.tier)).toBe('phone');
     await page.clock.runFor(800);
     const f = await framesSince(page, n);
     const fade = f.filter((x) => x.mode === 'fade');
