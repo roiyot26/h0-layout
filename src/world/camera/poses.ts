@@ -1,6 +1,5 @@
 // Camera pose tables (M2 spec §1) and the tier rule. Positions are table mm datum; the
-// renderer maps them with units.toThree. Only the overview is used in this PR; the
-// station rows are here because the hop paths and the corridor tests start from them.
+// renderer maps them with units.toThree.
 import type { TablePoint, Tier } from '../units';
 
 export interface Pose {
@@ -55,7 +54,7 @@ export const STATION_POSES: Record<Tier, Record<StationId, Pose>> = {
 };
 
 /** Tier rule (§1.1, CHECKLIST F25): phone poses below 883 px wide or 500 px tall. */
-export const tierFor = (width: number, height: number): Tier => (width < 883 || height < 500 ? 'phone' : 'desktop');
+export { tierFor } from '../../tier';
 
 /** Desktop horizontal-FOV floor (§1.1): hFOV at aspect 1.6 for the overview and stations. */
 export const H_FOV_FLOOR = { overview: 57.5, station: 42.0 } as const;
