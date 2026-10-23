@@ -1,11 +1,11 @@
 // The trace card (M2 spec §5.4, ?trace=1&card=1): after the measurement script, a card
-// on screen with the median run's frame times, the device facts and a Copy results
-// button (JSON to the clipboard, a local action only). Sized to be read and
-// screenshotted on a 390 px phone. Preview builds only.
+// at the top left, clear of the ride controls, with the median run's frame times, the
+// device facts and a Copy results button (JSON to the clipboard, a local action only).
+// Sized to be read and screenshotted on a 390 px phone. Preview builds only.
 import type { ScriptResult } from './script';
 
 const CSS = `
-.trace-card, .trace-status { position: fixed; z-index: 50; right: 12px; top: 76px; box-sizing: border-box;
+.trace-card, .trace-status { position: fixed; z-index: 50; left: 12px; top: 76px; box-sizing: border-box;
   font: 16px/1.35 var(--sans, system-ui, sans-serif); color: #f2eee4; background: #1c1d1f;
   border: 2px solid #f2eee4; border-radius: 6px; box-shadow: 0 4px 18px rgba(0,0,0,.35); }
 .trace-status { padding: 10px 14px; font-weight: 600; }
@@ -103,7 +103,7 @@ export function showCard(r: ScriptResult, parent: HTMLElement = document.body): 
   h.textContent = 'H0 preview · trace';
   const sub = document.createElement('p');
   sub.className = 'sub';
-  sub.textContent = `Median of ${r.runs.length} × 20 s runs · ${r.when.slice(0, 16).replace('T', ' ')} UTC`;
+  sub.textContent = `Median of ${r.runs.length} × 20 s runs · ${new Date(r.when).toLocaleString([], { dateStyle: 'medium', timeStyle: 'short' })}`;
   const dl = document.createElement('dl');
   for (const [k, v] of cardRows(r)) {
     const dt = document.createElement('dt');
