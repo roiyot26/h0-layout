@@ -3,10 +3,25 @@ name: PR preview
 # Builds each pull request with SITE_BASE=/h0-layout-preview/pr-<n>/ and publishes the
 # build output to the preview Pages repo at /pr-<n>/. Previews are noindex (robots.txt
 # at the preview root plus a robots meta in every page). Closing the PR removes it.
+#
+# Checkpoint slots: running this workflow by hand (workflow_dispatch) builds the chosen
+# ref the same way and publishes it at /<slot>/. The slot is checked in the first step,
+# read from env only: lowercase letters, digits and hyphens (^[a-z0-9-]+$), so no empty
+# name, no dots (no "..") and no slashes; it may not start with a hyphen, is at most 40
+# characters, and "pr-" names are reserved for pull requests, so a slot can never be
+# a pr-<n> folder. Slots are never removed by this workflow: the only removal is a
+# closed pull request's own pr-<n>. Publishing to an existing slot replaces it; remove
+# a slot by hand in the preview repo.
 
 on:
   pull_request:
     types: [opened, synchronize, reopened, closed]
+  workflow_dispatch:
+    inputs:
+      slot:
+        description: 'Checkpoint slot (lowercase letters, digits, hyphens; not pr-*). Published at /h0-layout-preview/<slot>/'
+        required: true
+        type: string
 
 permissions:
   contents: read
@@ -25,32 +40,69 @@ env:
 
 jobs:
   publish:
-    if: github.event.pull_request.head.repo.full_name == github.repository
+    if: github.event_name == 'workflow_dispatch' || github.event.pull_request.head.repo.full_name == github.repository
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
+      # Sets SLOT, HEAD_SHA and REMOVE for every later step, and the remove output.
+      - name: Resolve the preview slot
+        id: slot
+        env:
+          EVENT: ${{ github.event_name }}
+          ACTION: ${{ github.event.action }}
+          SLOT_INPUT: ${{ inputs.slot }}
+          PR_HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+        run: |
+          set -eu
+          if [ "$EVENT" = pull_request ]; then
+            slot="pr-${PR}"
+            sha="$PR_HEAD_SHA"
+            remove=false
+            if [ "$ACTION" = closed ]; then remove=true; fi
+          else
+            slot="$SLOT_INPUT"
+            fail() { echo "::error::Invalid slot: $1"; exit 1; }
+            [ -n "$slot" ] || fail "it is empty"
+            case "$slot" in *..*) fail "it contains '..'" ;; esac
+            case "$slot" in */*) fail "it contains a slash" ;; esac
+            [[ "$slot" =~ ^[a-z0-9-]+$ ]] || fail "use only lowercase letters, digits and hyphens"
+            [[ "$slot" != -* ]] || fail "it may not start with a hyphen"
+            [ "${#slot}" -le 40 ] || fail "it is longer than 40 characters"
+            [[ "$slot" != pr-* ]] || fail "pr-* names are reserved for pull request previews"
+            sha="$GITHUB_SHA"
+            remove=false
+          fi
+          {
+            echo "SLOT=$slot"
+            echo "HEAD_SHA=$sha"
+            echo "REMOVE=$remove"
+          } >> "$GITHUB_ENV"
+          echo "remove=$remove" >> "$GITHUB_OUTPUT"
+          echo "Preview slot: $slot ($sha)"
       - uses: actions/checkout@v5
-        if: github.event.action != 'closed'
+        if: steps.slot.outputs.remove != 'true'
       - uses: actions/setup-node@v5
-        if: github.event.action != 'closed'
+        if: steps.slot.outputs.remove != 'true'
         with: { node-version: 20, cache: npm }
       - name: Build preview
-        if: github.event.action != 'closed'
+        if: steps.slot.outputs.remove != 'true'
         run: |
           sudo apt-get update -qq && sudo apt-get install -y -qq poppler-utils
           npm ci
-          npm run build
+          SITE_BASE="/h0-layout-preview/${SLOT}/" npm run build
           for f in $(find dist -type f); do node scripts/history-check.mjs --text "$f" > /dev/null; done
           grep -q 'name="robots" content="noindex' dist/index.html
         env:
-          SITE_BASE: /h0-layout-preview/pr-${{ github.event.pull_request.number }}/
           NOINDEX: '1'
           FLAGS_FILE: flags.preview.json
+      - name: No email, mailto or phone in the preview build
+        if: steps.slot.outputs.remove != 'true'
+        run: node e2e/dist-guard.mjs
+        env:
+          DIST_DIR: ${{ github.workspace }}/dist
       - name: Publish to the preview repo
         env:
           DEPLOY_KEY: ${{ secrets.PREVIEW_DEPLOY_KEY }}
-          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
-          ACTION: ${{ github.event.action }}
         run: |
           set -eu
           mkdir -p ~/.ssh
@@ -60,13 +112,17 @@ jobs:
           export GIT_SSH_COMMAND="ssh -i ~/.ssh/preview_key -o IdentitiesOnly=yes"
           git clone --depth 1 "git@github.com:${PREVIEW_REPO}.git" preview
           cd preview
-          rm -rf "pr-${PR}"
-          if [ "$ACTION" = closed ]; then
+          rm -rf -- "$SLOT"
+          if [ "$REMOVE" = true ]; then
             msg="Remove preview for pull request ${PR}"
           else
-            cp -R ../dist "pr-${PR}"
-            echo "$HEAD_SHA" > "pr-${PR}/build.txt"
-            msg="Preview for pull request ${PR} at ${HEAD_SHA:0:7}"
+            cp -R ../dist "$SLOT"
+            echo "$HEAD_SHA" > "$SLOT/build.txt"
+            if [ -n "$PR" ]; then
+              msg="Preview for pull request ${PR} at ${HEAD_SHA:0:7}"
+            else
+              msg="Checkpoint preview ${SLOT} at ${HEAD_SHA:0:7}"
+            fi
           fi
           printf 'User-agent: *\nDisallow: /\n' > robots.txt
           touch .nojekyll
@@ -76,11 +132,9 @@ jobs:
           git push -q origin HEAD:main
           rm -f ~/.ssh/preview_key
       - name: Wait for the preview to be live
-        if: github.event.action != 'closed'
-        env:
-          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+        if: steps.slot.outputs.remove != 'true'
         run: |
-          url="https://roiyot26.github.io/h0-layout-preview/pr-${PR}/"
+          url="https://roiyot26.github.io/h0-layout-preview/${SLOT}/"
           for i in $(seq 1 40); do
             code=$(curl -s -o /dev/null -w '%{http_code}' "$url" || true)
             built=$(curl -s "${url}build.txt?t=$i" || true)
