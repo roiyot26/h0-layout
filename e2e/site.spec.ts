@@ -206,3 +206,52 @@ test('link names carry no arrow', async ({ page }) => {
   const names = await page.locator('a').evaluateAll((as) => as.map((a) => a.textContent ?? ''));
   expect(names.filter((n) => /[↗←→]/.test(n))).toEqual([]);
 });
+
+// M2 backlog 3: tabbing down the board never leaves a focused row's ring below the
+// fold. The ring is the row outline, so both the link and its row are checked.
+for (const vp of [
+  { width: 1440, height: 900 },
+  { width: 390, height: 844 },
+  { width: 360, height: 780 },
+  { width: 320, height: 640 },
+]) {
+  test(`the board focus ring stays above the fold @ ${vp.width}`, async ({ page }) => {
+    await page.setViewportSize(vp);
+    await page.goto('./');
+    const count = await page.locator('.board a').count();
+    expect(count).toBeGreaterThan(0);
+    const low: string[] = [];
+    let seen = 0;
+    for (let i = 0; i < 40 && seen < count; i++) {
+      await page.keyboard.press('Tab');
+      const r = await page.evaluate(() => {
+        const el = document.activeElement as HTMLElement | null;
+        if (!el?.closest('.board')) return null;
+        const a = el.getBoundingClientRect();
+        const row = el.closest('tr')!.getBoundingClientRect();
+        return { a: a.bottom, row: row.bottom, vh: innerHeight, name: (el.textContent ?? '').trim().slice(0, 30) };
+      });
+      if (!r) continue;
+      seen++;
+      if (r.a + 2 > r.vh || r.row > r.vh + 0.5) low.push(`${r.name} (link ${r.a.toFixed(1)}, row ${r.row.toFixed(1)}, viewport ${r.vh})`);
+    }
+    expect(seen).toBe(count);
+    expect(low, low.join(' | ')).toEqual([]);
+  });
+}
+
+// M2 backlog 4 (C9): Departures is a 48 px corner like Skip, and they share a top.
+for (const vp of [
+  { width: 1440, height: 900 },
+  { width: 390, height: 844 },
+  { width: 360, height: 780 },
+]) {
+  test(`Departures is 48 px and level with Skip @ ${vp.width}`, async ({ page }) => {
+    await page.setViewportSize(vp);
+    await page.goto('./');
+    const departures = await page.locator('.topbar .corner.departures').boundingBox();
+    const skip = await page.locator('.topbar .corner.skip').boundingBox();
+    expect(Math.abs(departures!.height - 48)).toBeLessThanOrEqual(0.5);
+    expect(Math.abs(departures!.y - skip!.y)).toBeLessThanOrEqual(0.5);
+  });
+}

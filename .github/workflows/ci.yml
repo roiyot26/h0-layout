@@ -67,6 +67,13 @@ jobs:
       - run: npm run build
         env:
           SITE_BASE: /h0-layout/
+      - name: Build the 3D preview into dist-3d (three and world chunks)
+        run: |
+          npx vite build
+        env:
+          SITE_BASE: /h0-layout/
+          FLAGS_FILE: flags.preview.json
+          OUT_DIR: dist-3d
       - name: size-limit
         run: npm run size
       - name: Byte budget
@@ -241,6 +248,22 @@ jobs:
           OUT_DIR: dist-off
       - name: Content checks, companies off
         run: node scripts/content-check.mjs dist-off --companies off
+      - name: Install e2e deps
+        working-directory: e2e
+        run: npm ci
+      - name: Install Chromium
+        working-directory: e2e
+        run: npx playwright install chromium --with-deps
+      - name: Facts routes, companies off (JS off, 1440 and 390)
+        working-directory: e2e
+        run: |
+          npm run facts
+        env:
+          CI: 'true'
+          SHOW_COMPANIES: '0'
+          SITE_BASE: /h0-layout/
+          DIST_DIR: ${{ github.workspace }}/dist-off
+          PORT: '4173'
 
   cv:
     name: cv

@@ -1,8 +1,20 @@
 [
   {
     "name": "site JS",
-    "path": "dist/assets/*.js",
+    "path": "dist/assets/boot-*.js",
     "limit": "15 KB",
+    "gzip": true
+  },
+  {
+    "name": "3D vendor",
+    "path": "dist-3d/assets/three-*.js",
+    "limit": "190 KB",
+    "gzip": true
+  },
+  {
+    "name": "3D world",
+    "path": "dist-3d/assets/world-*.js",
+    "limit": "60 KB",
     "gzip": true
   },
   {

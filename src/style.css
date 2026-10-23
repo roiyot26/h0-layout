@@ -65,6 +65,7 @@ a { color: inherit; }
   color: var(--ink-light); border: 2px solid var(--dim); border-radius: 3px;
 }
 .topbar .corner.skip { order: 1; min-height: 48px; } /* STYLE §11: Skip is 48 px tall */
+.topbar .corner.departures { min-height: 48px; } /* STYLE §11: corners are 48 px; was implicit via align-items: stretch */
 .corner:hover { border-color: var(--ink-light); }
 .corner[aria-current='page'] { border-color: var(--signal); }
 
@@ -117,6 +118,11 @@ a { color: inherit; }
 .board tr.status .c-rem { color: var(--signal); }
 .board tbody tr { position: relative; }
 .board a { text-decoration: none; color: inherit; }
+.board a { scroll-margin-bottom: 48px; } /* a Tab-focused row scrolls up clear of the fold, ring included */
+/* Chromium only scrolls a focused link that is out of view, and the link's text box sits
+   inside its row, so the row ring could end below the fold (320 px). It does count the
+   scroller's padding, so the board pages get the same 48 px there. */
+html:has(.board) { scroll-padding-bottom: 48px; }
 /* The whole row is the link's hit area (≥44 px, UX ruling 5). */
 .board a::after { content: ''; position: absolute; inset: 0; }
 .board tbody tr:hover td { color: var(--signal); }

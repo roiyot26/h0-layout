@@ -1,7 +1,7 @@
 import { execFileSync } from 'node:child_process';
-import { mkdtempSync, rmSync, writeFileSync } from 'node:fs';
+import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
-import { join } from 'node:path';
+import { dirname, join } from 'node:path';
 import { afterEach, describe, expect, it } from 'vitest';
 
 // Planted dist files for e2e/dist-guard.mjs. Every address and number is built at
@@ -15,7 +15,10 @@ const dirs: string[] = [];
 function run(files: Record<string, string>) {
   const dir = mkdtempSync(join(tmpdir(), 'h0-guard-'));
   dirs.push(dir);
-  for (const [name, body] of Object.entries(files)) writeFileSync(join(dir, name), body);
+  for (const [name, body] of Object.entries(files)) {
+    mkdirSync(dirname(join(dir, name)), { recursive: true });
+    writeFileSync(join(dir, name), body);
+  }
   try {
     const out = execFileSync('node', [guard], { env: { ...process.env, DIST_DIR: dir }, encoding: 'utf8' });
     return { code: 0, out };
@@ -98,6 +101,57 @@ describe('dist-guard', () => {
     it('ignores float literals in bundled code', () => {
       const js = `const k=vec3(${['0', '5', '87'].join('.').replace('.87', '87')}00000000,0.2126729,0.0721750);`;
       expect(run({ 'index.js': js }).code).toBe(0);
+    });
+  });
+
+  describe('the three.js vendor chunk', () => {
+    const phone = ['050', '123', '4567'].join('-');
+    const js = (v: string) => `const k="${v}";export{k};\n`;
+    const vendor = 'assets/three-AbCd1234.js';
+
+    it('skips only the phone and email rules on assets/three-<8>.js, and logs each skip', () => {
+      const r = run({ [vendor]: js(phone) + js(`${user[0]}${at}${host}`) });
+      expect(r.code).toBe(0);
+      expect(r.out).toContain(`dist-guard: skip ${vendor}: phone number`);
+      expect(r.out).toContain(`dist-guard: skip ${vendor}: email address`);
+      expect(r.out).not.toContain('4567');
+    });
+
+    it('still catches the planted number in a world chunk', () => {
+      const r = run({ 'assets/world-AbCd1234.js': js(phone) });
+      expect(r.code).toBe(1);
+      expect(r.out).toMatch(/FAIL assets\/world-AbCd1234\.js:\d+: phone number/);
+      expect(r.out).not.toContain('dist-guard: skip');
+    });
+
+    for (const name of [
+      'assets/three-AbCd1234.js.map',
+      'assets/three-x.js',
+      'assets/three-AbCd12345.js',
+      'assets/three-AbCd1234.mjs',
+      'assets/boot-AbCd1234.js',
+      'sub/assets/three-AbCd1234.js',
+      'three-AbCd1234.js',
+    ]) {
+      it(`still catches the planted number in ${name}`, () => {
+        const r = run({ [name]: js(phone) });
+        expect(r.code).toBe(1);
+        expect(r.out).toContain(`FAIL ${name}:`);
+        expect(r.out).toMatch(/: phone number/);
+        expect(r.out).not.toContain('dist-guard: skip');
+      });
+    }
+
+    it('still catches a planted mailto in the vendor chunk', () => {
+      const r = run({ [vendor]: js(['mail', 'to:'].join('') + 'x') });
+      expect(r.code).toBe(1);
+      expect(r.out).toMatch(/FAIL assets\/three-AbCd1234\.js:\d+: mailto/);
+    });
+
+    it('still catches an entity-encoded @ in the vendor chunk', () => {
+      const r = run({ [vendor]: js(`a&#${'64'};b`) });
+      expect(r.code).toBe(1);
+      expect(r.out).toMatch(/FAIL assets\/three-AbCd1234\.js:\d+: entity-encoded @/);
     });
   });
 });

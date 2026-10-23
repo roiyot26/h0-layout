@@ -1,5 +1,10 @@
 import { test, expect } from '@playwright/test';
 import { pages } from '../scripts/routes.mjs';
+import { EMPLOYERS } from '../scripts/content-check.mjs';
+
+// Same reading as flagsFromEnv: SHOW_COMPANIES=0/false/off/no builds the names-off site.
+const namesOff = /^(0|false|off|no)$/i.test(process.env.SHOW_COMPANIES ?? '');
+const namesIn = (text: string) => EMPLOYERS.filter((n) => text.toLowerCase().includes(n.toLowerCase()));
 
 const viewports = [
   { name: '1440', width: 1440, height: 900 },
@@ -31,7 +36,12 @@ for (const route of pages) {
 
         const bodyText = await page.locator('body').innerText();
         for (const fact of route.facts) {
+          // With names off, a fact that names an employer is meant to be gone.
+          if (namesOff && namesIn(fact).length) continue;
           expect(bodyText, `missing fact ${JSON.stringify(fact)}`).toContain(fact);
+        }
+        if (namesOff) {
+          expect(namesIn(bodyText), 'employer names on a names-off build').toEqual([]);
         }
 
         const overflow = await page.evaluate(() => {

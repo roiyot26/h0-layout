@@ -86,10 +86,22 @@ export function views(text) {
   return [...new Set(out)];
 }
 
+// The three.js vendor chunk, by its exact built name (M2 spec, opening PR backlog 1).
+// Minified vendor code trips the phone rule, and its own strings are not site copy, so
+// this one file shape skips the email-address and phone rules. The mailto and entity
+// rules still run on it, and every rule runs on every other file (world-*, boot-* and
+// anything that only looks similar).
+export const VENDOR_CHUNK = /^assets\/three-[A-Za-z0-9_-]{8}\.js$/;
+export const VENDOR_SKIPS = ['email address', 'phone number'];
+
+/** The rules a dist-relative path skips: none, or VENDOR_SKIPS for the vendor chunk. */
+export const skippedRules = (rel) => (VENDOR_CHUNK.test(rel) ? VENDOR_SKIPS : []);
+
 // Returns [{ rule, line }] for the first hit of each rule. Never returns the match.
-export function scan(text) {
+export function scan(text, skip = []) {
   const found = [];
   for (const [rule, find] of rules) {
+    if (skip.includes(rule)) continue;
     for (const view of views(text)) {
       const m = find(view);
       if (!m) continue;
@@ -118,9 +130,12 @@ async function main() {
   let bad = 0;
   const files = (await walk(dist)).filter((p) => TEXT.test(p));
   for (const file of files) {
-    for (const { rule, line } of scan(await readFile(file, 'utf8'))) {
+    const rel = relative(dist, file).replace(/\\/g, '/');
+    const skip = skippedRules(rel);
+    for (const rule of skip) console.log(`dist-guard: skip ${rel}: ${rule} (three.js vendor chunk)`);
+    for (const { rule, line } of scan(await readFile(file, 'utf8'), skip)) {
       bad++;
-      console.log(`FAIL ${relative(dist, file)}:${line}: ${rule}`);
+      console.log(`FAIL ${rel}:${line}: ${rule}`);
     }
   }
   console.log(`dist-guard: ${files.length} text file(s), ${bad} problem(s)`);
