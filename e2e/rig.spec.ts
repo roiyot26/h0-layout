@@ -117,7 +117,7 @@ function phases(frames: Frame[]) {
   return { moving, after, t0, arrival: after[0]!.t, duration: after[0]!.t - t0 };
 }
 
-test.afterEach(({ page }) => drainGpu(page));
+test.afterEach(({ page }, testInfo) => drainGpu(page, testInfo));
 
 test.describe('F17 curves', () => {
   test('fly, front pair: 1.0 s on cubic-bezier(0.65,0,0.35,1), RMSE ≤ 2%', async ({ page }) => {

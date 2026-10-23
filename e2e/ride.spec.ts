@@ -117,7 +117,7 @@ async function advance(page: Page, ms: number, until?: 'ride-over') {
   return ran;
 }
 
-test.afterEach(({ page }) => drainGpu(page));
+test.afterEach(({ page }, testInfo) => drainGpu(page, testInfo));
 
 test.describe('M2-10 ride', () => {
   test.describe.configure({ timeout: 180_000 });

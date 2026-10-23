@@ -40,7 +40,7 @@ async function open(page: Page, viewport: { width: number; height: number }, que
   await page.clock.pauseAt(await page.evaluate(() => Date.now() + 50));
 }
 
-test.afterEach(({ page }) => drainGpu(page));
+test.afterEach(({ page }, testInfo) => drainGpu(page, testInfo));
 
 test.describe('trace card', () => {
   test('&card=1 runs 3 × 20 s of hops and ride, then shows the median; Copy puts the JSON on the clipboard', async ({ page, context }) => {

@@ -17,7 +17,7 @@ interface Frame {
   render: { calls: number; triangles: number };
 }
 
-test.afterEach(({ page }) => drainGpu(page));
+test.afterEach(({ page }, testInfo) => drainGpu(page, testInfo));
 
 for (const vp of VIEWPORTS) {
   test(`overview at ${vp.name} stays under the scene caps`, async ({ page }) => {
