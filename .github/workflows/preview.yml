@@ -8,10 +8,9 @@ name: PR preview
 # ref the same way and publishes it at /<slot>/. The slot is checked in the first step,
 # read from env only: lowercase letters, digits and hyphens (^[a-z0-9-]+$), so no empty
 # name, no dots (no "..") and no slashes; it may not start with a hyphen, is at most 40
-# characters, and "pr-" names are reserved for pull requests, so a slot can never be
-# a pr-<n> folder. Slots are never removed by this workflow: the only removal is a
-# closed pull request's own pr-<n>. Publishing to an existing slot replaces it; remove
-# a slot by hand in the preview repo.
+# characters, and "pr-" names are reserved for pull requests, so a slot can never be a pr-<n> folder.
+# Slots are only replaced by a new dispatch to the same slot, never deleted; the only deletion is a closed pull request's own pr-<n>.
+# Remove a slot by hand in the preview repo.
 
 on:
   pull_request:
