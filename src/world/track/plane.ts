@@ -10,13 +10,14 @@ const onBack = (x: number): number => STRAIGHT + HALF + (RIGHT_CX - x);
 
 /** Height keys [s, mm above rail] in the train's direction (STYLE §8.3 table). */
 export const PLANE_KEYS: readonly (readonly [number, number])[] = [
-  [onFront(1060), 95],
+  [onFront(1150) - 190, 95],
+  [onFront(1150), 140],
+  [onFront(1470), 140],
+  [onFront(1470) + 190, 95],
   [onBack(1380), 95],
   [onBack(1200), 150],
   [onBack(1020), 150],
-  [onBack(990), 140],
-  [onBack(670), 140],
-  [onBack(670) + 190, 95],
+  [onBack(1020) + 190, 95],
 ];
 
 /** The flutter heave (±2 mm, STYLE §8.3), used as a margin in distance checks. */

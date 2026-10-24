@@ -492,7 +492,7 @@ export function createRig(opts: RigOptions): Rig {
     r.v = tr.v;
     r.sc = follow(r.sc, chaseGoal(tr.s, world.tier), dt);
     for (const p of world.pieces) if (p.id === 'railbus') placeTrain(p.group, tr.s);
-    // Arrivals: announce each station; the lap ends back at Bootcamp and unlocks the cab.
+    // Arrivals: announce each station; the lap ends back at City and unlocks the cab.
     const arrivals = LEGS.filter((l) => r.t >= l.arrive).length;
     if (arrivals > r.arrived) {
       r.arrived = arrivals;

@@ -25,7 +25,7 @@ export interface Fly {
   at(ms: number): FlyFrame;
 }
 
-const BACK: readonly StationId[] = ['campus', 'city'];
+const BACK: readonly StationId[] = ['campus', 'bootcamp'];
 
 /** Spherical interpolation of two unit vectors. */
 function slerp(a: TablePoint, b: TablePoint, f: number): TablePoint {
@@ -72,7 +72,7 @@ export function flyClear(p0: TablePoint, to: StationId, end: Pose, boxes: readon
 
 /**
  * A fly from `start` (the authored pose, or an orbited one) to the authored pose of `to`.
- * `to` decides the pair: Campus and City use the over-hill quadratic, the front pair the
+ * `to` decides the pair: Campus and Bootcamp use the over-hill quadratic, the front pair the
  * lifted line.
  */
 export function makeFly(start: { position: TablePoint; look: Look; vFov: number }, to: StationId, end: Pose): Fly {

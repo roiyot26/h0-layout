@@ -27,8 +27,8 @@ export const RIDE = {
   lag: 350,
 } as const;
 
-/** The ride's station order (story order from Bootcamp). */
-export const RIDE_ORDER: readonly StationId[] = ['bootcamp', 'campus', 'city', 'workshop'];
+/** The ride's station order around the oval from the parked train on the front straight. */
+export const RIDE_ORDER: readonly StationId[] = ['city', 'campus', 'bootcamp', 'workshop'];
 
 /** The railbus, front of the leading car to the back of the trailing one. */
 export const TRAIN_LENGTH = 2 * CAR.length + CAR.gap; // 309
@@ -40,16 +40,16 @@ const mid = (r: { x0: number; x1: number }) => (r.x0 + r.x1) / 2;
 
 /** Platform centres as arc length on the loop. */
 export const STATION_S: Record<StationId, number> = {
-  bootcamp: onFront(mid(PLATFORMS.bootcamp[0])),
+  city: onFront(mid(PLATFORMS.city[0])),
   campus: onBack(mid(PLATFORMS.campus[0])),
-  city: onBack(mid(PLATFORMS.city[0])),
+  bootcamp: onBack(mid(PLATFORMS.bootcamp[0])),
   workshop: onFront(mid(PLATFORMS.workshop[0])),
 };
 
-/** The parked train's front sits this far past the Bootcamp platform centre (1464 − 1310). */
-const STOP_AHEAD = RAILBUS_X + TRAIN_LENGTH - mid(PLATFORMS.bootcamp[0]);
+/** The parked train's front sits this far past the City platform centre (1464 − 1310). */
+const STOP_AHEAD = RAILBUS_X + TRAIN_LENGTH - mid(PLATFORMS.city[0]);
 
-/** Where the train's front stops at each station: placed on the platform as it is parked at Bootcamp. */
+/** Where the train's front stops at each station: placed on the platform as it is parked at City. */
 export const stopFront = (id: StationId): number => STATION_S[id] + STOP_AHEAD;
 
 export interface Leg {
@@ -68,10 +68,10 @@ export interface Leg {
 const RAMP_MS = (RIDE.speed / RIDE.accel) * 1000;
 const RAMP_MM = (RIDE.speed * RIDE.speed) / (2 * RIDE.accel);
 
-/** The four legs of the lap, unwrapped from Bootcamp's stop. */
+/** The four legs of the lap, unwrapped from City's stop. */
 export const LEGS: readonly Leg[] = (() => {
   const legs: Leg[] = [];
-  let s = stopFront('bootcamp');
+  let s = stopFront('city');
   let t = 0;
   RIDE_ORDER.forEach((from, i) => {
     const to = RIDE_ORDER[(i + 1) % RIDE_ORDER.length]!;
@@ -104,7 +104,7 @@ export interface TrainState {
 
 /** The train at `t` ms into the ride. */
 export function trainAt(t: number): TrainState {
-  if (t >= RIDE_MS) return { s: LEGS[3]!.s1, v: 0, leg: 3, phase: 'done', at: 'bootcamp' };
+  if (t >= RIDE_MS) return { s: LEGS[3]!.s1, v: 0, leg: 3, phase: 'done', at: 'city' };
   const tt = Math.max(t, 0);
   const leg = Math.max(
     0,
@@ -158,7 +158,7 @@ export const LOW = {
   ease: 200,
   /** Arc length range of the low run on the back straight (east portal → west end of the shed). */
   s0: onBack(BORE.x1),
-  s1: onBack(PLATFORMS.city[0].x0),
+  s1: onBack(PLATFORMS.bootcamp[0].x0),
 } as const;
 
 const smooth = (k: number) => {

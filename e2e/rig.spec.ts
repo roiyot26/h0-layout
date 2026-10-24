@@ -126,7 +126,7 @@ test.afterEach(({ page }, testInfo) => drainGpu(page, testInfo));
 
 test.describe('F17 curves', () => {
   test('fly, front pair: 1.0 s on cubic-bezier(0.65,0,0.35,1), RMSE ≤ 2%', async ({ page }) => {
-    await open(page, DESKTOP, './bootcamp/');
+    await open(page, DESKTOP, './now/');
     await setDraw(page, false);
     const f = await hop(page, 'workshop');
     const { moving, after, t0, duration } = phases(f);
@@ -143,7 +143,7 @@ test.describe('F17 curves', () => {
   test('fly, back pair: arc-length progress on the curve, RMSE ≤ 2%', async ({ page }) => {
     await open(page, DESKTOP, './teaching/');
     await setDraw(page, false);
-    const f = await hop(page, 'city');
+    const f = await hop(page, 'bootcamp');
     const { moving, after, t0, duration } = phases(f);
     expect(Math.abs(duration - 1000)).toBeLessThanOrEqual(50);
     const pts = [...moving.map((m) => m.pos), after[0]!.pos];
@@ -174,9 +174,9 @@ test.describe('F17 curves', () => {
   });
 
   test('reduced motion: every hop is a 200 ± 20 ms crossfade with no translation', async ({ page }) => {
-    await open(page, DESKTOP, './bootcamp/', true);
+    await open(page, DESKTOP, './now/', true);
     await setDraw(page, false);
-    for (const to of ['workshop', 'overview', 'city'] as const) {
+    for (const to of ['workshop', 'overview', 'bootcamp'] as const) {
       const f = await hop(page, to);
       const { moving, t0, duration } = phases(f);
       expect(moving.every((m) => m.mode === 'fade')).toBe(true);
@@ -205,13 +205,13 @@ test.describe('F17 curves', () => {
 
 test.describe('F20 (b): orbited starts', () => {
   test.describe.configure({ timeout: 300_000 });
-  for (const from of ['campus', 'city'] as const) {
+  for (const from of ['campus', 'bootcamp'] as const) {
     test(`from ${from}: 1.00 s, lands on the authored pose, ≤ 45°/s, roll 0, ≥ 12 mm`, async ({ page }) => {
       // A smaller desktop-tier viewport (same 1.6 aspect, so the same FOV): the checks are
       // pose maths, and SwiftShader renders it faster.
       await open(page, { width: 960, height: 600 }, `./${PATHS[from]}/`);
       await setDraw(page, false);
-      const to = from === 'campus' ? 'city' : 'campus';
+      const to = from === 'campus' ? 'bootcamp' : 'campus';
       const boxes = await page.evaluate(() => (window as unknown as W).__h0World.boxes);
       const clear = (p: P) =>
         Math.min(
@@ -452,8 +452,8 @@ test.describe('screenshots', () => {
       await page.screenshot({ path: `${OUT}/rig-${name}-crossfade-overview-bootcamp-150ms.png` });
       // Mid-fly on each pair, 500 of 1000 ms.
       for (const [from, path, to] of [
-        ['bootcamp', './bootcamp/', 'workshop'],
-        ['campus', './teaching/', 'city'],
+        ['city', './now/', 'workshop'],
+        ['campus', './teaching/', 'bootcamp'],
       ] as const) {
         await still(page, vp, path);
         await page.screenshot({ path: `${OUT}/rig-${name}-${from}.png` });
