@@ -10,10 +10,10 @@ export const STORY: readonly StationId[] = ['bootcamp', 'campus', 'city', 'works
 
 export type HopType = 'fly' | 'crossfade';
 
-/** The same-straight neighbour pairs: Workshop ↔ Bootcamp (front), Campus ↔ City (back). */
+/** The same-straight neighbour pairs: Workshop ↔ City (front), Campus ↔ Bootcamp (back). */
 export const FLY_PAIRS: readonly (readonly [StationId, StationId])[] = [
-  ['workshop', 'bootcamp'],
-  ['campus', 'city'],
+  ['workshop', 'city'],
+  ['campus', 'bootcamp'],
 ];
 
 export function hopType(from: Dest, to: Dest): HopType {

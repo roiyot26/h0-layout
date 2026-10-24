@@ -43,7 +43,7 @@ function simulate(tier: Tier) {
 
 describe('ride timetable (M2-10)', () => {
   it('starts from the parked train and runs one lap in story order', () => {
-    expect(RIDE_ORDER).toEqual(['bootcamp', 'campus', 'city', 'workshop']);
+    expect(RIDE_ORDER).toEqual(['city', 'campus', 'bootcamp', 'workshop']);
     expect(trainAt(0).s).toBeCloseTo(RAILBUS_X + TRAIN_LENGTH - LEFT_CX, 6);
     expect(LEGS.map((l) => Math.round((l.s1 - l.s0) * 10) / 10)).toEqual([2365.7, 560, 1955.7, 450]);
     expect(LEGS[3]!.s1 - LEGS[0]!.s0).toBeCloseTo(LAP, 6);

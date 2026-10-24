@@ -327,12 +327,12 @@ test.describe('M2-13 ride, reduced motion', () => {
     expect(Math.abs(fade.at(-1)!.t - fade[0]!.t - 200)).toBeLessThanOrEqual(25);
     expect(f.every((x) => x.mode !== 'fly' && x.mode !== 'ride')).toBe(true);
     expect(f.filter((x) => x.ride).every((x) => x.ride!.s === PARKED && x.ride!.v === 0)).toBe(true);
-    expect((await state(page)).dest).toBe('bootcamp');
+    expect((await state(page)).dest).toBe('city');
     for (const [how, to] of [
       ['click', 'campus'],
-      ['ArrowRight', 'city'],
+      ['ArrowRight', 'bootcamp'],
       ['click', 'workshop'],
-      ['ArrowLeft', 'city'],
+      ['ArrowLeft', 'bootcamp'],
     ] as const) {
       n = await mark(page);
       if (how === 'click') await page.locator('.ride-next').click();
@@ -345,7 +345,7 @@ test.describe('M2-13 ride, reduced motion', () => {
       expect((await state(page)).dest).toBe(to);
     }
     await page.clock.runFor(5000);
-    expect((await state(page)).dest).toBe('city');
+    expect((await state(page)).dest).toBe('bootcamp');
     expect(await page.evaluate(() => history.length)).toBe(len);
     await page.keyboard.press('Escape');
     await page.clock.runFor(400);

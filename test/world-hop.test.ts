@@ -70,9 +70,9 @@ describe('pose tables (M2 spec §1)', () => {
 
 describe('hop paths (M2 spec §2)', () => {
   it('builds the §2.3 controls', () => {
-    const q = backControl(STATION_POSES.desktop.campus.position, STATION_POSES.desktop.city.position);
+    const q = backControl(STATION_POSES.desktop.campus.position, STATION_POSES.desktop.bootcamp.position);
     expect([r(q.x), r(q.y), r(q.h)]).toEqual([1112.5, 1644.2, 363.7]);
-    const qp = backControl(STATION_POSES.phone.campus.position, STATION_POSES.phone.city.position);
+    const qp = backControl(STATION_POSES.phone.campus.position, STATION_POSES.phone.bootcamp.position);
     expect([r(qp.x), r(qp.y), r(qp.h)]).toEqual([1112.5, 1720.8, 293.3]);
   });
 
@@ -81,7 +81,7 @@ describe('hop paths (M2 spec §2)', () => {
       const path = backPath(tier);
       expect(dist(path(0.5), APEX)).toBeLessThan(1e-9);
       expect(dist(path(0), STATION_POSES[tier].campus.position)).toBe(0);
-      expect(dist(path(1), STATION_POSES[tier].city.position)).toBeLessThan(1e-9);
+      expect(dist(path(1), STATION_POSES[tier].bootcamp.position)).toBeLessThan(1e-9);
     }
   });
 

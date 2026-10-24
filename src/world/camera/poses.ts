@@ -27,10 +27,10 @@ const station = (cam: TablePoint, target: TablePoint, vFov: number): Pose => ({
 });
 
 const TARGETS: Record<StationId, TablePoint> = {
-  bootcamp: p(1310, 150, 20),
+  bootcamp: p(830, 1040, 20),
   workshop: p(860, 150, 20),
   campus: p(1395, 960, 30),
-  city: p(830, 1040, 20),
+  city: p(1310, 150, 20),
 };
 
 export const OVERVIEW: Record<Tier, Pose> = {
@@ -40,16 +40,16 @@ export const OVERVIEW: Record<Tier, Pose> = {
 
 export const STATION_POSES: Record<Tier, Record<StationId, Pose>> = {
   desktop: {
-    bootcamp: station(p(1310, -360, 226), TARGETS.bootcamp, LENS.mm50),
+    bootcamp: station(p(830, 586.8, 231.3), TARGETS.bootcamp, LENS.mm50),
     workshop: station(p(860, -360, 226), TARGETS.workshop, LENS.mm50),
     campus: station(p(1395, 506.8, 241.3), TARGETS.campus, LENS.mm50),
-    city: station(p(830, 586.8, 231.3), TARGETS.city, LENS.mm50),
+    city: station(p(1310, -360, 226), TARGETS.city, LENS.mm50),
   },
   phone: {
-    bootcamp: station(p(1310, -379.8, 301.7), TARGETS.bootcamp, LENS.mm24),
+    bootcamp: station(p(830, 510.2, 301.7), TARGETS.bootcamp, LENS.mm24),
     workshop: station(p(860, -379.8, 301.7), TARGETS.workshop, LENS.mm24),
     campus: station(p(1395, 430.2, 311.7), TARGETS.campus, LENS.mm24),
-    city: station(p(830, 510.2, 301.7), TARGETS.city, LENS.mm24),
+    city: station(p(1310, -379.8, 301.7), TARGETS.city, LENS.mm24),
   },
 };
 

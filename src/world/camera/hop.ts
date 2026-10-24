@@ -35,13 +35,13 @@ export function liftedLine(p0: TablePoint, p3: TablePoint): (e: number) => Table
   };
 }
 
-/** The back pair (Campus → City) as a quadratic Bézier at curve parameter u. */
+/** The back pair (Campus → Bootcamp) as a quadratic Bézier at curve parameter u. */
 export const backPath = (tier: Tier, from: TablePoint = STATION_POSES[tier].campus.position): ((u: number) => TablePoint) =>
-  quadraticThrough(from, STATION_POSES[tier].city.position);
+  quadraticThrough(from, STATION_POSES[tier].bootcamp.position);
 
-/** The front pair (Workshop → Bootcamp): a straight lerp plus 30 mm · sin(π·e). */
+/** The front pair (Workshop → City): a straight lerp plus 30 mm · sin(π·e). */
 export const frontPath = (tier: Tier, from: TablePoint = STATION_POSES[tier].workshop.position): ((e: number) => TablePoint) =>
-  liftedLine(from, STATION_POSES[tier].bootcamp.position);
+  liftedLine(from, STATION_POSES[tier].city.position);
 
 /**
  * Arc-length table (§2.3): cumulative length at n + 1 evenly spaced curve parameters

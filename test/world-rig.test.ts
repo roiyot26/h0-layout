@@ -6,7 +6,7 @@ import { DRAG_GAIN, DRAG_THRESHOLD } from '../src/world/input';
 
 describe('camera rig helpers', () => {
   it('flies only between same-straight neighbours', () => {
-    expect(NEIGHBOUR).toEqual({ workshop: 'bootcamp', bootcamp: 'workshop', campus: 'city', city: 'campus' });
+    expect(NEIGHBOUR).toEqual({ workshop: 'city', city: 'workshop', campus: 'bootcamp', bootcamp: 'campus' });
   });
 
   it('centres phone stations in the free area (64 px top, 88 + 44 + 8 px bottom)', () => {

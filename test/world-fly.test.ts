@@ -8,7 +8,7 @@ import { STATION_POSES, type StationId } from '../src/world/camera/poses';
 import { MIN_CLEARANCE, clearance, nearestAabb } from '../src/world/terrain/clearance';
 import type { Tier } from '../src/world/units';
 
-const OTHER: Record<StationId, StationId> = { campus: 'city', city: 'campus', workshop: 'bootcamp', bootcamp: 'workshop' };
+const OTHER: Record<StationId, StationId> = { campus: 'bootcamp', bootcamp: 'campus', workshop: 'city', city: 'workshop' };
 const HILL = { x0: 990, x1: 1235, y0: 1020, y1: 1200 };
 const STEP = 1; // ms
 
@@ -28,7 +28,7 @@ function startFor(tier: Tier, from: StationId, azimuth: number, polar: number, d
 describe('fly (M2 spec §2, §6 F20b)', () => {
   it('inverts arc length with a 256-entry table', () => {
     const p = STATION_POSES.desktop;
-    const curve = quadraticThrough(p.campus.position, p.city.position);
+    const curve = quadraticThrough(p.campus.position, p.bootcamp.position);
     const arc = arcLengthInverse(curve);
     // Equal steps in s cover equal lengths.
     const pts = Array.from({ length: 201 }, (_, i) => curve(arc.u(i / 200)));
@@ -51,11 +51,11 @@ describe('fly (M2 spec §2, §6 F20b)', () => {
     }
   });
 
-  it('keeps the raw City start (−30°, 78°, 0.30 m) unreachable', () => {
+  it('keeps the raw Bootcamp start (−30°, 78°, 0.30 m) unreachable', () => {
     for (const tier of ['desktop', 'phone'] as Tier[]) {
-      const { s, start, boxes } = startFor(tier, 'city', -30, 78, 300);
-      const raw = orbitPosition(STATION_POSES[tier].city, { ...s, azimuth: -30, polar: 78, distance: 300 });
-      expect(nearestAabb(raw, boxes).box?.name).toBe('city block 3');
+      const { s, start, boxes } = startFor(tier, 'bootcamp', -30, 78, 300);
+      const raw = orbitPosition(STATION_POSES[tier].bootcamp, { ...s, azimuth: -30, polar: 78, distance: 300 });
+      expect(nearestAabb(raw, boxes).box?.name).toBe('bootcamp roof 3');
       expect(Math.hypot(start.position.x - raw.x, start.position.y - raw.y, start.position.h - raw.h)).toBeGreaterThan(10);
       expect(clearance(start.position, boxes)).toBeGreaterThanOrEqual(MIN_CLEARANCE);
     }

@@ -4,7 +4,7 @@ import { type Dest, STORY, hopType, step } from '../src/world/camera/views';
 
 describe('hop-type table (M2 spec §6 F20a)', () => {
   const dests: Dest[] = ['overview', ...STATIONS];
-  const fly = new Set(['workshop>bootcamp', 'bootcamp>workshop', 'campus>city', 'city>campus']);
+  const fly = new Set(['workshop>city', 'city>workshop', 'campus>bootcamp', 'bootcamp>campus']);
 
   it('flies only between same-straight neighbours and crossfades everything else', () => {
     for (const a of dests) {

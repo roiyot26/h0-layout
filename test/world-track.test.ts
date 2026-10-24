@@ -75,8 +75,8 @@ describe('track centre line (STYLE §1)', () => {
       const next = stations[(i + 1) % stations.length]!;
       return (next - s + LAP) % LAP;
     });
-    expect(legs[0]).toBeCloseTo(2365.7, 0); // Bootcamp → Campus
-    expect(legs[1]).toBeCloseTo(560, 0); // Campus → City
+    expect(legs[0]).toBeCloseTo(2365.7, 0); // City → Campus
+    expect(legs[1]).toBeCloseTo(560, 0); // Campus → Bootcamp
     expect(legs.reduce((a, b) => a + b, 0)).toBeCloseTo(LAP, 6);
   });
 

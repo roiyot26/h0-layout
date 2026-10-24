@@ -1,4 +1,4 @@
-// The railbus (M2 spec §4.2): two 153 × 33 cars parked at Bootcamp on the front straight,
+// The railbus (M2 spec §4.2): two 153 × 33 cars parked at City on the front straight,
 // enamel lower body 8–27 mm above rail, cream upper body 27–46 mm above rail.
 import { FRONT_Y } from '../track/path';
 import { RAIL_TOP } from '../units';

@@ -7,11 +7,11 @@ import type { Dest } from './camera/views';
 import { type RunStats, medianStats, refreshMs, runStats } from './stats';
 import type { Trace } from './trace';
 
-/** One run: overview → Workshop → Bootcamp (fly) → City (crossfade) → Campus (fly) → overview, then 8 s of ride. */
+/** One run: overview → Workshop → City (fly) → Bootcamp (crossfade) → Campus (fly) → overview, then 8 s of ride. */
 export const RUN: readonly { at: number; go?: Dest; ride?: 'start' | 'end' }[] = [
   { at: 0, go: 'workshop' },
-  { at: 2500, go: 'bootcamp' },
-  { at: 5000, go: 'city' },
+  { at: 2500, go: 'city' },
+  { at: 5000, go: 'bootcamp' },
   { at: 7500, go: 'campus' },
   { at: 10_000, go: 'overview' },
   { at: 12_000, ride: 'start' },

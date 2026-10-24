@@ -23,7 +23,7 @@ describe('orbit clamps (M2 spec §1.2, §1.3, §3.4)', () => {
     }
     // Overview slant inside the 2.0–2.6 m range; station polar inside 50–78°.
     expect(authoredOrbit(OVERVIEW.desktop).distance).toBeCloseTo(2179.2, 0);
-    expect(authoredOrbit(STATION_POSES.desktop.city).polar).toBeCloseTo(65, 0);
+    expect(authoredOrbit(STATION_POSES.desktop.bootcamp).polar).toBeCloseTo(65, 0);
   });
 
   it('clamps azimuth, polar, distance and the target box', () => {
@@ -38,13 +38,13 @@ describe('orbit clamps (M2 spec §1.2, §1.3, §3.4)', () => {
     expect(r).toEqual({ azimuth: 30, polar: 50, distance: 300, target: { x: a.target.x + 125, y: a.target.y, h: a.target.h - 125 } });
   });
 
-  it('moves the raw City start (azimuth −30, polar 78, 0.30 m) out of the city block', () => {
-    const pose = STATION_POSES.desktop.city;
+  it('moves the raw Bootcamp start (azimuth −30, polar 78, 0.30 m) out of the bootcamp house', () => {
+    const pose = STATION_POSES.desktop.bootcamp;
     const raw = { ...authoredOrbit(pose), azimuth: -30, polar: 78, distance: 300 };
     const rawPos = orbitPosition(pose, raw);
     expect(nearestAabb(rawPos, boxes).distance).toBe(0);
-    expect(nearestAabb(rawPos, boxes).box?.min).toMatchObject({ x: 680, y: 730 });
-    const c = clampOrbit(pose, limitsFor('desktop', 'city'), raw, boxes);
+    expect(nearestAabb(rawPos, boxes).box?.min).toMatchObject({ x: 662, y: 754 });
+    const c = clampOrbit(pose, limitsFor('desktop', 'bootcamp'), raw, boxes);
     expect(c.distance).toBeGreaterThan(300);
     expect(c.distance).toBeLessThanOrEqual(800);
     expect(clearance(orbitPosition(pose, c), boxes)).toBeGreaterThanOrEqual(MIN_CLEARANCE);
